@@ -20,17 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // import './bootstrap';
 
-import { initCompanyForm,  initDeleteModal, initCompaniesPage } from './company';
-// import { initCountriesPage, initIndustriesPage } from './general';
+import { initCompanyForm, initCompanyPage } from './company';
 import { initCrudPage } from './general';
 
 document.addEventListener('DOMContentLoaded', () => {
 
     initCompanyForm();
-    initCompaniesPage();
-    initDeleteModal();
-    // initCountriesPage();
-    // initIndustriesPage();
+    initCompanyPage();
     initCrudPage();
 
 });

@@ -23,20 +23,13 @@ return new class extends Migration
             $table->json('emails')->nullable();
             $table->json('phones')->nullable();
 
-            // $table->json('industry')->nullable();
-
             $table->json('address')->nullable();
-            // $table->json('country')->nullable();
 
             $table->json('social_links')->nullable();
-
 
             $table->timestamps();
 
             $table->index('name');
-            // $table->index('industry');
-            // $table->index('address');
-            // $table->index('country');
         });
     }
 

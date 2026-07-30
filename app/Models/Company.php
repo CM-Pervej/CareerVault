@@ -26,11 +26,13 @@ class Company extends Model
 
     public function industries()
     {
-        return $this->belongsToMany(Industry::class);
+        return $this->belongsToMany(Industry::class) 
+                    ->withTimestamps();
     }
 
     public function countries()
     {
-        return $this->belongsToMany(Country::class);
+        return $this->belongsToMany(Country::class)
+                    ->withTimestamps();
     }
 }

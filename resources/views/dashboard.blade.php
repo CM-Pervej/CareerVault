@@ -4,28 +4,7 @@
 
 @section('content')
 
-{{-- Tailwind CDN (dev only) + DaisyUI --}}
-<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
-<script src="https://cdn.tailwindcss.com"></script>
-
 <div id="lv-app" class="min-h-screen bg-base-200 p-6 font-sans">
-
-    {{-- ── Header ── --}}
-    {{-- <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <i class="fa-solid fa-vault text-primary-content text-lg"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold leading-none">LifeVault</h1>
-                <p class="text-xs text-base-content/50 mt-0.5">Your job search, all in one place</p>
-            </div>
-        </div>
-        <button onclick="openModal('add-application-modal')"
-            class="btn btn-primary btn-sm gap-2">
-            <i class="fa-solid fa-plus text-xs"></i> Add application
-        </button>
-    </div> --}}
 
     {{-- ── Stat cards ── --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
