@@ -48,89 +48,94 @@
         <div class="lg:col-span-2 space-y-6">
             <div class="card bg-base-100 shadow-sm border border-base-300">
                 <div class="card-body">
-                    <h2 class="cv-title text-lg font-semibold mb-6"> Overview</h2>
+                    {{-- <h2 class="cv-title text-lg font-semibold mb-6"> Overview</h2> --}}
 
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                        {{-- Company Name --}}
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M13 21V10a1 1 0 011-1h5a1 1 0 011 1v11M9 8h.01M9 12h.01M9 16h.01"/>
-                                </svg>
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6 content-end items-end">
+                        <div class="grid grid-cols-1 gap-x-8 gap-y-6">
+                            {{-- Company Name --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M13 21V10a1 1 0 011-1h5a1 1 0 011 1v11M9 8h.01M9 12h.01M9 16h.01"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Company Name</dt>
+                                    <dd class="mt-0.5 text-sm font-medium truncate">{{ $company->name }}</dd>
+                                </div>
                             </div>
-                            <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Company Name</dt>
-                                <dd class="mt-0.5 text-sm font-medium truncate">{{ $company->name }}</dd>
+
+                            {{-- Website --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Website</dt>
+                                    <dd class="mt-0.5 text-sm">
+                                        @if($company->website)
+                                            <a href="{{ $company->website }}" target="_blank" rel="noopener" class="link link-primary no-underline hover:underline cv-mono truncate inline-block max-w-full align-bottom">
+                                                {{ $company->website }}
+                                            </a>
+                                        @else
+                                            <span class="text-base-content/30">—</span>
+                                        @endif
+                                    </dd>
+                                </div>
+                            </div>
+
+                            {{-- Career Page --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zM8 5V4a2 2 0 012-2h4a2 2 0 012 2v1M3 11h18"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Career Page</dt>
+                                    <dd class="mt-0.5 text-sm">
+                                        @if($company->career_page)
+                                            <a href="{{ $company->career_page }}" target="_blank" rel="noopener" class="link link-primary no-underline hover:underline cv-mono truncate inline-block max-w-full align-bottom">
+                                                {{ $company->career_page }}
+                                            </a>
+                                        @else
+                                            <span class="text-base-content/30">—</span>
+                                        @endif
+                                    </dd>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Website --}}
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z"/>
-                                </svg>
+                        <div class="flex flex-col gap-6">
+                            <h2 class="cv-title text-lg font-semibold mb-3.5"> Company Information</h2>
+                            {{-- Created At --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v3M16 2v3M3.5 9h17M4 5h16a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Created At</dt>
+                                    <dd class="mt-0.5 text-sm font-medium">{{ $company->created_at->format('d M Y, h:i A') }}</dd>
+                                </div>
                             </div>
-                            <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Website</dt>
-                                <dd class="mt-0.5 text-sm">
-                                    @if($company->website)
-                                        <a href="{{ $company->website }}" target="_blank" rel="noopener" class="link link-primary no-underline hover:underline cv-mono truncate inline-block max-w-full align-bottom">
-                                            {{ $company->website }}
-                                        </a>
-                                    @else
-                                        <span class="text-base-content/30">—</span>
-                                    @endif
-                                </dd>
-                            </div>
-                        </div>
 
-                        {{-- Career Page --}}
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zM8 5V4a2 2 0 012-2h4a2 2 0 012 2v1M3 11h18"/>
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Career Page</dt>
-                                <dd class="mt-0.5 text-sm">
-                                    @if($company->career_page)
-                                        <a href="{{ $company->career_page }}" target="_blank" rel="noopener" class="link link-primary no-underline hover:underline cv-mono truncate inline-block max-w-full align-bottom">
-                                            {{ $company->career_page }}
-                                        </a>
-                                    @else
-                                        <span class="text-base-content/30">—</span>
-                                    @endif
-                                </dd>
-                            </div>
-                        </div>
-
-                        {{-- Created At --}}
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v3M16 2v3M3.5 9h17M4 5h16a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"/>
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Created At</dt>
-                                <dd class="mt-0.5 text-sm font-medium">{{ $company->created_at->format('d M Y, h:i A') }}</dd>
-                            </div>
-                        </div>
-
-                        {{-- Updated At --}}
-                        <div class="flex items-start gap-3">
-                            <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Updated At</dt>
-                                <dd class="mt-0.5 text-sm font-medium" title="{{ $company->updated_at->format('d M Y, h:i A') }}">
-                                    {{ $company->updated_at->diffForHumans() }}
-                                </dd>
+                            {{-- Updated At --}}
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Updated At</dt>
+                                    <dd class="mt-0.5 text-sm font-medium" title="{{ $company->updated_at->format('d M Y, h:i A') }}">
+                                        {{ $company->updated_at->diffForHumans() }}
+                                    </dd>
+                                </div>
                             </div>
                         </div>
                     </dl>
@@ -350,22 +355,40 @@
 
             @php
             $icons = [
-                'LinkedIn' => 'fa-linkedin', 'Facebook' => 'fa-facebook', 'X (Twitter)' => 'fa-x-twitter', 'GitHub' => 'fa-github',
-                'Instagram' => 'fa-instagram', 'YouTube' => 'fa-youtube', 'TikTok' => 'fa-tiktok', 'Discord' => 'fa-discord',
-                'Telegram' => 'fa-telegram', 'Pinterest' => 'fa-pinterest', 'Reddit' => 'fa-reddit', 'Medium' => 'fa-medium',
-                'Behance' => 'fa-behance', 'Dribbble' => 'fa-dribbble', 'Website' => 'fa-globe', 'Other' => 'fa-link',
+                'LinkedIn' => ['icon' => 'fa-linkedin', 'color' => 'text-[#0A66C2]'],
+                'Facebook' => ['icon' => 'fa-facebook', 'color' => 'text-[#1877F2]'],
+                'X (Twitter)' => ['icon' => 'fa-x-twitter', 'color' => 'text-black'],
+                'GitHub' => ['icon' => 'fa-github', 'color' => 'text-[#181717]'],
+                'Instagram' => ['icon' => 'fa-instagram', 'color' => 'text-[#E4405F]'],
+                'YouTube' => ['icon' => 'fa-youtube', 'color' => 'text-[#FF0000]'],
+                'TikTok' => ['icon' => 'fa-tiktok', 'color' => 'text-black'],
+                'Discord' => ['icon' => 'fa-discord', 'color' => 'text-[#5865F2]'],
+                'Telegram' => ['icon' => 'fa-telegram', 'color' => 'text-[#26A5E4]'],
+                'Pinterest' => ['icon' => 'fa-pinterest', 'color' => 'text-[#BD081C]'],
+                'Reddit' => ['icon' => 'fa-reddit', 'color' => 'text-[#FF4500]'],
+                'Medium' => ['icon' => 'fa-medium', 'color' => 'text-black'],
+                'Behance' => ['icon' => 'fa-behance', 'color' => 'text-[#1769FF]'],
+                'Dribbble' => ['icon' => 'fa-dribbble', 'color' => 'text-[#EA4C89]'],
+                'Website' => ['icon' => 'fa-globe', 'color' => 'text-[#10B981]'],
+                'Other' => ['icon' => 'fa-link', 'color' => 'text-gray-500'],
             ];
             @endphp
 
             @if(!empty($company->social_links))
             <div class="card bg-base-100 shadow border border-base-300">
                 <div class="card-body">
-                    <h2 class="cv-title text-lg">Digital Presence</h2>
+                    <h2 class="cv-title text-lg text-center">Digital Presence</h2>
 
-                    <div class="flex gap-3 flex-wrap">
+                    <div class="flex gap-3 flex-wrap justify-center">
                         @foreach($company->social_links as $social)
-                            <a href="{{ $social['url'] }}" target="_blank" class="btn btn-outline btn-circle tooltip" data-tip="{{ $social['platform'] }}">
-                                <i class="fa-brands {{ $icons[$social['platform']] ?? 'fa-link' }}"></i>
+
+                            @php
+                                $platform = $social['platform'];
+                                $socialIcon = $icons[$platform] ?? ['icon' => 'fa-link', 'color' => 'text-gray-500'];
+                            @endphp
+
+                            <a href="{{ $social['url'] }}" target="_blank" class="tooltip" data-tip="{{ $platform }}">
+                                <i class="fa-brands {{ $socialIcon['icon'] }} {{ $socialIcon['color'] }} text-3xl"></i>
                             </a>
                         @endforeach
                     </div>

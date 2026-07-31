@@ -9,7 +9,7 @@
         <ul>
             <li> <a href="{{ route('dashboard') }}"> <i class="fa-solid fa-house mr-1"></i> Dashboard </a> </li>
             <li> <a href="{{ route('companies.index') }}"> Companies </a> </li>
-            <li> {{ $isEdit ? 'Edit' : 'Create' }} </li>
+            <li class="font-semibold"> {{ $isEdit ? 'Edit' : 'Create' }} </li>
         </ul>
     </div>
 

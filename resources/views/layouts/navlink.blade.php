@@ -144,10 +144,10 @@
                 </ul>
             </div>
 
-            {{-- <a href="{{ route('companies.inde', $company) }}"
+            <a href="{{ url('/Contacts') }}"
                class="px-3 py-2 text-[13.5px] font-medium text-[#494C54] hover:text-[#12141A] rounded-lg hover:bg-[#F6F5F1] transition-colors">
                 Contacts
-            </a> --}}
+            </a>
 
             <a href="{{ url('/interviews') }}"
                class="px-3 py-2 text-[13.5px] font-medium text-[#494C54] hover:text-[#12141A] rounded-lg hover:bg-[#F6F5F1] transition-colors">

@@ -59,7 +59,7 @@ class CompanyController extends Controller
         $company->countries()->sync($validated['country_ids'] ?? []);
         $company->industries()->sync($validated['industry_ids'] ?? []);
 
-        return redirect()->route('companies.index')->with('success', 'Company created successfully.');
+        return redirect()->route('companies.show', $company)->with('success', 'Company created successfully.');
     }
 
     /**

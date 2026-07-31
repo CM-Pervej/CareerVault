@@ -14,7 +14,7 @@ class CountryController extends Controller
      */
     public function index()
     {
-        $countries = Country::orderBy('name')->paginate(15);
+        $countries = Country::orderBy('name')->get();
         return view('general.country', compact('countries'));
     }
 
@@ -33,15 +33,20 @@ class CountryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:countries,name',
+            'iso_code' => 'nullable|string|max:10',
+            'phone_code' => 'nullable|string|max:20',
+            'currency' => 'nullable|string|max:50',
+            // 'currency_code' => 'nullable|string|max:10',
+            'capital' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'flag' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
 
         Country::create($validated);
 
-        return redirect()
-            ->route('countries.index')
-            ->with('success', 'Country created successfully.');
+        return redirect()->route('countries.index')->with('success', 'Country created successfully.');
     }
 
     /**
@@ -57,7 +62,7 @@ class CountryController extends Controller
      */
     public function edit(Country $country)
     {
-        $countries = Country::orderBy('name')->paginate(15);
+        $countries = Country::orderBy('name')->get();
 
         return view('general.country', compact('countries', 'country'));
     }
@@ -69,15 +74,20 @@ class CountryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:countries,name,' . $country->id,
+            'iso_code' => 'nullable|string|max:10',
+            'phone_code' => 'nullable|string|max:20',
+            'currency' => 'nullable|string|max:50',
+            // 'currency_code' => 'nullable|string|max:10',
+            'capital' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'flag' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
 
         $country->update($validated);
 
-        return redirect()
-            ->route('countries.index')
-            ->with('success', 'Country updated successfully.');
+        return redirect()->route('countries.index')->with('success', 'Country updated successfully.');
     }
 
     /**
@@ -85,10 +95,12 @@ class CountryController extends Controller
      */
     public function destroy(Country $country)
     {
+        if ($country->companies()->exists()) {
+            return redirect()->route('countries.index')->with('error', 'Cannot delete country assigned to companies.');
+        }
+
         $country->delete();
 
-        return redirect()
-            ->route('countries.index')
-            ->with('success', 'Country deleted successfully.');
+        return redirect()->route('countries.index')->with('success', 'Country deleted successfully.');
     }
 }

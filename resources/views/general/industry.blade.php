@@ -7,14 +7,14 @@
     {{-- Breadcrumb --}}
     <div class="breadcrumbs text-sm mb-2">
         <ul>
-            <li> <a href="{{ route('dashboard') }}"> <i class="fa-solid fa-house mr-1"></i> Dashboard </a> </li> <li> Industries </li>
+            <li> <a href="{{ route('dashboard') }}"> <i class="fa-solid fa-house mr-1"></i> Dashboard </a> </li> <li class="font-semibold"> Industries </li>
         </ul>
     </div>
 
     <section class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
         <div>
             <h1 class="cv-title text-3xl">Industries</h1>
-            <p class="text-base-content/60 text-sm">
+            <p class="text-base-content/60 text-sm whitespace-nowrap">
                 {{ $industries->total() ?? $industries->count() }} industries on record
             </p>
         </div>   
