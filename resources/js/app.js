@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 import { initCompanyForm, initCompanyPage } from './company';
 import { initCrudPage } from './general';
+import './city';
 
 document.addEventListener('DOMContentLoaded', () => {
 

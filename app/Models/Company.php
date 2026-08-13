@@ -35,4 +35,10 @@ class Company extends Model
         return $this->belongsToMany(Country::class)
                     ->withTimestamps();
     }
+
+    public function cities()
+    {
+        return $this->belongsToMany(City::class)
+                    ->withTimestamps();
+    }
 }

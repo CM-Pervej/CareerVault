@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Job;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Company;
 use App\Models\Country;
 use App\Models\Industry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CompanyController extends Controller
 {
@@ -16,7 +18,7 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        $companies = Company::with(['countries', 'industries'])
+        $companies = Company::with(['countries', 'industries', 'cities',])
             ->orderBy('name')
             ->paginate(15);
 
@@ -30,8 +32,39 @@ class CompanyController extends Controller
     {
         $countries = Country::orderBy('name')->get();
         $industries = Industry::orderBy('name')->get();
+        $cities = collect();
 
-        return view('job.company.create', compact('countries', 'industries'));
+        return view('job.company.create', compact('countries', 'industries', 'cities'));
+    }
+
+    /**
+     * Return cities belonging to the selected countries.
+     *
+     * Used by AJAX when countries are selected/changed.
+     */
+    public function cities(Request $request)
+    {
+        $countryIds = $request->input('country_ids', []);
+
+        if (!is_array($countryIds)) {
+            $countryIds = [$countryIds];
+        }
+
+        $countryIds = collect($countryIds)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($countryIds->isEmpty()) {
+            return response()->json([]);
+        }
+
+        $cities = City::whereIn('country_id', $countryIds)
+            ->orderBy('name')
+            ->get(['id', 'country_id', 'name',]);
+
+        return response()->json($cities);
     }
 
     /**
@@ -43,21 +76,26 @@ class CompanyController extends Controller
 
         $validated = $this->validateCompany($request);
 
-        $company = Company::create([
-            'name'          => $validated['name'],
-            'slug'          => Str::slug($validated['name']),
-            'website'       => $validated['website'] ?? null,
-            'career_page'   => $validated['career_page'] ?? null,
+        $countryIds = $validated['country_ids'] ?? [];
+        $cityIds = $validated['city_ids'] ?? [];
 
-            'emails'        => $this->nullIfEmpty($validated['emails'] ?? null),
-            'phones'        => $this->nullIfEmpty($validated['phones'] ?? null),
-            'address'       => $this->nullIfEmpty($validated['address'] ?? null),
-            'social_links'  => $this->nullIfEmpty($validated['social_links'] ?? null),
+        $this->validateCitiesBelongToCountries($cityIds, $countryIds);
+
+        $company = Company::create([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'website' => $validated['website'] ?? null,
+            'career_page' => $validated['career_page'] ?? null,
+
+            'emails' => $this->nullIfEmpty($validated['emails'] ?? null),
+            'phones' => $this->nullIfEmpty($validated['phones'] ?? null),
+            'address' => $this->nullIfEmpty($validated['address'] ?? null),
+            'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
         ]);
 
-
-        $company->countries()->sync($validated['country_ids'] ?? []);
+        $company->countries()->sync($countryIds);
         $company->industries()->sync($validated['industry_ids'] ?? []);
+        $company->cities()->sync($cityIds);
 
         return redirect()->route('companies.show', $company)->with('success', 'Company created successfully.');
     }
@@ -68,11 +106,15 @@ class CompanyController extends Controller
     public function show(Company $company)
     {
         $company->load([
-            'countries:id,name',
+            'countries:id,name,iso_code',
             'industries:id,name',
+            'cities:id,country_id,name',
         ]);
 
-        return view('job.company.show', compact('company'));
+        // Group cities by their country
+        $citiesByCountry = $company->cities->sortBy('name')->groupBy('country_id');
+
+        return view('job.company.show', compact('company', 'citiesByCountry'));
     }
 
     /**
@@ -80,11 +122,20 @@ class CompanyController extends Controller
      */
     public function edit(Company $company)
     {
+        $company->load(['countries:id,name', 'industries:id,name', 'cities:id,country_id,name',]);
+
         $countries = Country::orderBy('name')->get();
         $industries = Industry::orderBy('name')->get();
 
+        $countryIds = $company->countries->pluck('id')->toArray();
 
-        return view('job.company.edit', compact('company', 'countries', 'industries'));
+        $cities = empty($countryIds)
+            ? collect()
+            : City::whereIn('country_id', $countryIds)
+                ->orderBy('name')
+                ->get(['id', 'country_id', 'name',]);
+
+        return view('job.company.edit', compact('company', 'countries', 'industries', 'cities'));
     }
 
     /**
@@ -96,19 +147,28 @@ class CompanyController extends Controller
 
         $validated = $this->validateCompany($request, $company);
 
-        $company->update([
-            'name'          => $validated['name'],
-            'slug'          => Str::slug($validated['name']),
-            'website'       => $validated['website'] ?? null,
-            'career_page'   => $validated['career_page'] ?? null,
+        $countryIds = $validated['country_ids'] ?? [];
+        $cityIds = $validated['city_ids'] ?? [];
 
-            'emails'        => $this->nullIfEmpty($validated['emails'] ?? null),
-            'phones'        => $this->nullIfEmpty($validated['phones'] ?? null),
-            'address'       => $this->nullIfEmpty($validated['address'] ?? null),
-            'social_links'  => $this->nullIfEmpty($validated['social_links'] ?? null),
+        $this->validateCitiesBelongToCountries($cityIds, $countryIds);
+
+        $company->update([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'website' => $validated['website'] ?? null,
+            'career_page' => $validated['career_page'] ?? null,
+
+            'emails' => $this->nullIfEmpty($validated['emails'] ?? null),
+            'phones' => $this->nullIfEmpty($validated['phones'] ?? null),
+            'address' => $this->nullIfEmpty($validated['address'] ?? null),
+            'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
         ]);
 
-        $company->countries()->sync($validated['country_ids'] ?? []);
+        /*
+         * Sync countries, industries, cities
+         */
+        $company->countries()->sync($countryIds);
+        $company->cities()->sync($cityIds);
         $company->industries()->sync($validated['industry_ids'] ?? []);
 
         return redirect()->route('companies.show', $company)->with('success', 'Company updated successfully.');
@@ -131,22 +191,30 @@ class CompanyController extends Controller
     {
         $request->merge([
             'emails' => collect($request->input('emails', []))
-                ->filter(fn ($item) => filled($item['email_type'] ?? null) || filled($item['email'] ?? null))
+                ->filter(
+                    fn ($item) => filled($item['email_type'] ?? null) || filled($item['email'] ?? null)
+                )
                 ->values()
                 ->all(),
 
             'phones' => collect($request->input('phones', []))
-                ->filter(fn ($item) => filled($item['phone_type'] ?? null) || filled($item['phone'] ?? null))
+                ->filter(
+                    fn ($item) => filled($item['phone_type'] ?? null) || filled($item['phone'] ?? null)
+                )
                 ->values()
                 ->all(),
 
             'address' => collect($request->input('address', []))
-                ->filter(fn ($item) => filled($item['address_type'] ?? null) || filled($item['address'] ?? null))
+                ->filter(
+                    fn ($item) => filled($item['address_type'] ?? null) || filled($item['address'] ?? null)
+                )
                 ->values()
                 ->all(),
 
             'social_links' => collect($request->input('social_links', []))
-                ->filter(fn ($item) => filled($item['platform'] ?? null) || filled($item['url'] ?? null))
+                ->filter(
+                    fn ($item) => filled($item['platform'] ?? null) || filled($item['url'] ?? null)
+                )
                 ->values()
                 ->all(),
         ]);
@@ -155,36 +223,67 @@ class CompanyController extends Controller
     /**
      * Company validation rules.
      */
-    private function validateCompany(Request $request, Company $company = null): array
-    {
+    private function validateCompany(Request $request, ?Company $company = null): array {
         return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255',],
+            'website' => ['nullable', 'url', 'max:255', 'unique:companies,website,' . ($company?->id ?? 'NULL'),],
+            'career_page' => ['nullable', 'url', 'max:255', 'unique:companies,career_page,' . ($company?->id ?? 'NULL'),],
 
-            'website' => [ 'nullable', 'url', 'max:255', 'unique:companies,website,' . ($company?->id ?? 'NULL')],
-            'career_page' => ['nullable', 'url', 'max:255', 'unique:companies,career_page,' . ($company?->id ?? 'NULL')],
+            'emails' => ['nullable', 'array',],
+            'emails.*.email_type' => ['required_with:emails.*.email', 'string', 'max:255',],
+            'emails.*.email' => ['required_with:emails.*.email_type', 'email', 'max:255',],
 
-            'emails' => 'nullable|array',
-            'emails.*.email_type' => 'required_with:emails.*.email|string|max:255',
-            'emails.*.email' => 'required_with:emails.*.email_type|email|max:255',
+            'phones' => ['nullable', 'array',],
+            'phones.*.phone_type' => ['required_with:phones.*.phone', 'string', 'max:255',],
+            'phones.*.phone' => ['required_with:phones.*.phone_type', 'string', 'max:50',],
 
-            'phones' => 'nullable|array',
-            'phones.*.phone_type' => 'required_with:phones.*.phone|string|max:255',
-            'phones.*.phone' => 'required_with:phones.*.phone_type|string|max:50',
+            'address' => ['nullable', 'array',],
+            'address.*.address_type' => ['required_with:address.*.address', 'string', 'max:255',],
+            'address.*.address' => ['required_with:address.*.address_type', 'string', 'max:255',],
 
-            'address' => 'nullable|array',
-            'address.*.address_type' => 'required_with:address.*.address|string|max:255',
-            'address.*.address' => 'required_with:address.*.address_type|string|max:255',
+            'social_links' => ['nullable', 'array',],
+            'social_links.*.platform' => ['required_with:social_links.*.url', 'string', 'max:100',],
+            'social_links.*.url' => ['required_with:social_links.*.platform', 'url', 'max:255',],
 
-            'social_links' => 'nullable|array',
-            'social_links.*.platform' => 'required_with:social_links.*.url|string|max:100',
-            'social_links.*.url' => 'required_with:social_links.*.platform|url|max:255',
+            'country_ids' => ['nullable', 'array',],
+            'country_ids.*' => ['integer', 'exists:countries,id',],
 
-            'country_ids' => 'nullable|array',
-            'country_ids.*' => 'exists:countries,id',
+            'industry_ids' => ['nullable', 'array',],
+            'industry_ids.*' => ['integer', 'exists:industries,id',],
             
-            'industry_ids' => 'nullable|array',
-            'industry_ids.*' => 'exists:industries,id',
+            'city_ids' => ['nullable', 'array',],
+            'city_ids.*' => ['integer', 'exists:cities,id',],
         ]);
+    }
+
+    /**
+     * Make sure every selected city belongs to one
+     * of the selected countries.
+     */
+    private function validateCitiesBelongToCountries(array $cityIds, array $countryIds): void 
+    {
+        $cityIds = array_values(array_unique($cityIds));
+        $countryIds = array_values(array_unique($countryIds));
+
+        if (empty($cityIds)) {
+            return;
+        }
+
+        if (empty($countryIds)) {
+            throw ValidationException::withMessages([
+                'city_ids' => 'Please select a country before selecting cities.',
+            ]);
+        }
+
+        $validCityCount = City::whereIn('id', $cityIds)
+            ->whereIn('country_id', $countryIds)
+            ->count();
+
+        if ($validCityCount !== count($cityIds)) {
+            throw ValidationException::withMessages([
+                'city_ids' => 'One or more selected cities do not belong to the selected countries.',
+            ]);
+        }
     }
 
     /**

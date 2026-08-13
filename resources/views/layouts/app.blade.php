@@ -34,7 +34,7 @@
 </head>
 <body class="bg-gray-100">
  
-    @include('layouts.navlink')
+    @include('layouts.navbar')
 
     <main class="container mx-auto py-5 px-14 min-h-screen bg-base-200">
         @yield('content')

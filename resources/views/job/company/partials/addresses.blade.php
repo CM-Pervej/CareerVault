@@ -74,11 +74,7 @@
 
                             <label class="textarea textarea-bordered flex items-start gap-2 w-full text-sm focus-within:textarea-primary @error("address.$index.address") textarea-error @enderror">
                                 <i class="fa-solid fa-map-pin text-base-content/30 text-xs mt-1"></i>
-                                <textarea
-                                    rows="2"
-                                    name="address[{{ $index }}][address]"
-                                    class="grow resize-none bg-transparent outline-none address-value"
-                                    placeholder="House #57, Road #25, Banani, Dhaka">{{ $address['address'] ?? '' }}</textarea>
+                                <textarea rows="2" name="address[{{ $index }}][address]" class="grow resize-none bg-transparent outline-none address-value" placeholder="House #57, Road #25, Banani, Dhaka">{{ $address['address'] ?? '' }}</textarea>
                             </label>
 
                             @error("address.$index.address")
@@ -146,10 +142,7 @@
 
                 <label class="textarea textarea-bordered flex items-start gap-2 w-full text-sm focus-within:textarea-primary">
                     <i class="fa-solid fa-map-pin text-base-content/30 text-xs mt-1"></i>
-                    <textarea
-                        rows="2"
-                        class="grow resize-none bg-transparent outline-none address-value"
-                        placeholder="House #57, Road #25, Banani, Dhaka"></textarea>
+                    <textarea rows="2" class="grow resize-none bg-transparent outline-none address-value" placeholder="House #57, Road #25, Banani, Dhaka"></textarea>
                 </label>
             </div>
 

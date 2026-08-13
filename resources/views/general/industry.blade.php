@@ -111,7 +111,7 @@
 
                                 <td class="px-4 py-3">
                                     <div class="flex gap-2 justify-center">
-                                        <a href="{{ route('industries.edit', $item) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium px-3 py-1.5 transition">
+                                        <a href="{{ route('industries.edit', $item) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium px-3 py-1.5 transition hover:text-indigo-600">
                                             <i class="fa-solid fa-pen text-[11px]"></i>
                                             Edit
                                         </a>

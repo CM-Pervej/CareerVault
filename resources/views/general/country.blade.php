@@ -7,13 +7,7 @@
     {{-- Breadcrumb --}}
     <div class="breadcrumbs text-sm mb-2">
         <ul>
-            <li>
-                <a href="{{ route('dashboard') }}">
-                    <i class="fa-solid fa-house mr-1"></i>
-                    Dashboard
-                </a>
-            </li>
-
+            <li><a href="{{ route('dashboard') }}"><i class="fa-solid fa-house mr-1"></i>Dashboard</a></li>
             <li class="font-semibold">Countries</li>
         </ul>
     </div>
@@ -97,13 +91,15 @@
                             {{-- Actions --}}
                             <td>
                                 <div class="flex justify-center gap-2">
-                                    <a href="{{ route('countries.edit',$item) }}" class="btn btn-sm btn-ghost">
+                                    <a href="{{ route('countries.edit',$item) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium px-3 py-1.5 transition hover:text-indigo-600">
                                         <i class="fa-solid fa-pen"></i>
+                                        Edit
                                     </a>
 
-                                    <button type="button" class="open-delete-modal btn btn-sm btn-ghost text-rose-600"
+                                    <button type="button" class="open-delete-modal inline-flex items-center gap-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium px-3 py-1.5 transition"
                                         data-action="{{ route('countries.destroy',$item) }}" data-name="{{ $item->name }}">
                                         <i class="fa-solid fa-trash"></i>
+                                        Delete
                                     </button>
                                 </div>
                             </td>

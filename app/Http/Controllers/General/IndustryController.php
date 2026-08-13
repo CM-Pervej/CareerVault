@@ -49,7 +49,7 @@ class IndustryController extends Controller
      */
     public function show(Industry $industry)
     {
-        return redirect()->route('industries.index');
+        // return redirect()->route('industries.index');
     }
 
     /**

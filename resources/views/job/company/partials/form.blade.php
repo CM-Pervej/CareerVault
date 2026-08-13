@@ -9,6 +9,9 @@
         <ul>
             <li> <a href="{{ route('dashboard') }}"> <i class="fa-solid fa-house mr-1"></i> Dashboard </a> </li>
             <li> <a href="{{ route('companies.index') }}"> Companies </a> </li>
+            @if($isEdit)
+                <li class="font-semibold">{{ $company->name }}</li>
+            @endif
             <li class="font-semibold"> {{ $isEdit ? 'Edit' : 'Create' }} </li>
         </ul>
     </div>
