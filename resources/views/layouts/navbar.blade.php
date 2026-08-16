@@ -182,6 +182,18 @@
                                 </span>
                             </a>
                         </li>
+
+                        <li role="none">
+                            <a href="{{ route('cities.index') }}" role="menuitem" class="flex items-center gap-3 w-full rounded-xl px-2.5 py-2.5 text-[13.5px] text-[#33353A] hover:bg-[#F7F5F0] transition-colors duration-150">
+                                <span class="w-8 h-8 rounded-[10px] bg-[#F1EEE6] flex items-center justify-center text-[#8A6F3F] text-[13px] shrink-0">
+                                    <i class="fa-solid fa-share-nodes"></i>
+                                </span>
+                                <span>
+                                    <span class="block font-semibold text-[#12141A]">Social Platforms</span>
+                                    <span class="block text-[11px] text-[#9A9CA3]">Manage social platforms</span>
+                                </span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>

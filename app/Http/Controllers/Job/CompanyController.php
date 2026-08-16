@@ -16,11 +16,37 @@ class CompanyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $companies = Company::with(['countries', 'industries', 'cities',])
+        $search = trim($request->input('search', ''));
+
+        $companies = Company::query()->with(['countries', 'industries', 'cities',])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    
+                    $query->where('name', 'like', "%{$search}%")                    // Company name
+
+                    ->orWhereHas('cities', function ($query) use ($search) {        // City name
+                        $query->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('countries', function ($query) use ($search) {     // Country name
+                        $query->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('industries', function ($query) use ($search) {    // Industry name
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+                });
+            })
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(25)
+            ->withQueryString();
+
+        // AJAX search/pagination request
+        if ($request->ajax()) {
+            return response()->json(['html' => view('job.company.index', compact('companies'))->render(),]);
+        }
 
         return view('job.company.index', compact('companies'));
     }

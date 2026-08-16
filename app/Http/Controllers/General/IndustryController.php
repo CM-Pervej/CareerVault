@@ -12,9 +12,22 @@ class IndustryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $industries = Industry::orderBy('name', 'asc')->paginate(15);
+        $search = $request->input('search');
+
+        $industries = Industry::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(25)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            return view('general.partials.industry-table', compact('industries'))->render();
+        }
+
         return view('general.industry', compact('industries'));
     }
 

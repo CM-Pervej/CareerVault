@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Company')
+@section('title', $company->name)
 
 @section('content')
 

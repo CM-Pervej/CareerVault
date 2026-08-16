@@ -4,28 +4,36 @@
 
 @section('content')
 <div>
-    {{-- Breadcrumb --}}
-    <div class="breadcrumbs text-sm mb-2">
-        <ul>
-            <li><a href="{{ route('dashboard') }}"><i class="fa-solid fa-house mr-1"></i>Dashboard</a></li>
-            <li class="font-semibold">Countries</li>
-        </ul>
-    </div>
-
-    {{-- Header --}}
-    <section class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="cv-title text-3xl">Countries</h1>
-
-            <p class="text-base-content/60 text-sm">
-                {{ $countries->count() }} countries on record
-            </p>
+    <section class="mb-8">
+        {{-- Breadcrumb --}}
+        <div class="breadcrumbs text-sm mb-2">
+            <ul>
+                <li>
+                    <a href="{{ route('dashboard') }}">
+                        <i class="fa-solid fa-house mr-1"></i> Dashboard
+                    </a>
+                </li>
+                <li class="font-semibold">Countries</li>
+            </ul>
         </div>
 
-        <button onclick="countryModal.showModal()" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5">
-            <i class="fa-solid fa-plus"></i>
-            Add Country
-        </button>
+        {{-- Header --}}
+        <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+            {{-- Page heading --}}
+            <div class="min-w-0">
+                <p class="cv-eyebrow text-xs font-semibold tracking-widest uppercase text-indigo-500/70 mb-1">Directory</p>
+                <div class="flex items-center gap-2">
+                    <h1 class="cv-title text-3xl font-bold text-slate-900">Countries</h1>
+                    <sup class="rounded-full bg-indigo-500 text-white text-xs font-bold px-2 py-1 leading-none"> {{ $countries->count() }} </sup>
+                </div>
+                <p class="text-base-content/60 text-sm max-w-2xl mt-1">Manage countries and keep your company locations organized across your directory</p>
+            </div>
+
+            {{-- Add Country --}}
+            <button onclick="countryModal.showModal()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 shadow-sm transition shrink-0 cursor-pointer">
+                <i class="fa-solid fa-plus"></i> Add Country
+            </button>
+        </header>
     </section>
 
     {{-- Countries List --}}
@@ -92,14 +100,12 @@
                             <td>
                                 <div class="flex justify-center gap-2">
                                     <a href="{{ route('countries.edit',$item) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium px-3 py-1.5 transition hover:text-indigo-600">
-                                        <i class="fa-solid fa-pen"></i>
-                                        Edit
+                                        <i class="fa-solid fa-pen"></i> Edit
                                     </a>
 
-                                    <button type="button" class="open-delete-modal inline-flex items-center gap-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium px-3 py-1.5 transition"
+                                    <button type="button" class="open-delete-modal inline-flex items-center gap-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium px-3 py-1.5 transition cursor-pointer"
                                         data-action="{{ route('countries.destroy',$item) }}" data-name="{{ $item->name }}">
-                                        <i class="fa-solid fa-trash"></i>
-                                        Delete
+                                        <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </div>
                             </td>

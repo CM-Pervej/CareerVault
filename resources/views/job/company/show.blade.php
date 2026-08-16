@@ -28,8 +28,10 @@
     $badgeColors = ['badge-primary', 'badge-secondary', 'badge-accent', 'badge-info', 'badge-success', 'badge-warning'];
     $colorFor = fn (string $seed) => $badgeColors[crc32(strtolower($seed)) % count($badgeColors)];
 
-    $websiteHost = $company->website ? (parse_url($company->website, PHP_URL_HOST) ?: $company->website) : null;
-    $careerHost  = $company->career_page ? (parse_url($company->career_page, PHP_URL_HOST) ?: $company->career_page) : null;
+    // $websiteHost = $company->website ? (parse_url($company->website, PHP_URL_HOST) ?: $company->website) : null;
+    // $careerHost  = $company->career_page ? (parse_url($company->career_page, PHP_URL_HOST) ?: $company->career_page) : null;
+    $websiteHost = $company->website ? preg_replace('#^https?://#', '', rtrim($company->website, '/')) : null;
+    $careerHost  = $company->career_page ? preg_replace('#^https?://#', '', rtrim($company->career_page, '/')) : null;
 
     // --- Primary contact points, used for the one-tap action bar --------------
     $emailsCollection = collect($company->emails ?? []);
@@ -403,8 +405,8 @@
                                 <i class="fa-solid fa-signature"></i>
                             </div>
                             <div class="min-w-0">
-                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Legal Name</dt>
-                                <dd class="mt-0.5 text-sm font-medium truncate">{{ $company->name }}</dd>
+                                <dt class="text-xs font-medium uppercase tracking-wide text-base-content/50">Company Name</dt>
+                                <dd class="mt-0.5 text-sm font-medium" title="{{ $company->name }}"> {{ $company->name }} </dd>
                             </div>
                         </div>
 
