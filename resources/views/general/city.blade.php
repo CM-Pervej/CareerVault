@@ -4,18 +4,6 @@
 
 @section('content')
 
-<section class="mb-8">
-    {{-- Breadcrumb --}}
-    <div class="breadcrumbs text-sm mb-2">
-        <ul>
-            <li> 
-                <a href="{{ route('dashboard') }}"> <i class="fa-solid fa-house mr-1"></i> Dashboard 
-                </a> 
-            </li>
-            <li class="font-semibold">Cities</li>
-        </ul>
-    </div>
-
     {{-- Prepare countries and grouped cities --}}
     @php
         $countriesWithCities = $cities
@@ -32,72 +20,61 @@
 
     @endphp
 
-    {{-- Page Header + Form --}}
-    <header id="cityFormSection" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 scroll-mt-6">
-        <div class="min-w-0 flex-1">
-            <p class="cv-eyebrow text-xs font-semibold tracking-widest uppercase text-indigo-500/70 mb-1">Directory</p>
-            <div class="flex items-center gap-2">
-                <h1 class="cv-title text-3xl font-bold text-slate-900">Cities</h1>
-                <sup class="rounded-full bg-indigo-500 text-white text-xs font-bold px-2 py-1 leading-none"> {{ $cities->count() }} </sup>
-            </div>
-            <p class="text-base-content/60 text-sm max-w-2xl mt-1">Manage cities and keep your company locations organized across your directory</p>
-        </div>
+<section class="sm:mb-2">
+    {{-- Hero --}}
+    <div class="relative overflow-hidden sm:rounded-lg bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-700 px-5 py-6 sm:px-8 sm:py-8 shadow-lg shadow-indigo-900/10">
+        {{-- Decorative pattern (inline SVG, no CSS) --}}
+        <svg class="absolute -top-10 -right-10 w-64 h-64 opacity-10 pointer-events-none" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="99" stroke="white" stroke-width="1.5"/>
+            <circle cx="100" cy="100" r="72" stroke="white" stroke-width="1.5"/>
+            <circle cx="100" cy="100" r="45" stroke="white" stroke-width="1.5"/>
+        </svg>
 
-        {{-- Form --}}
-        <div class="w-full lg:w-auto lg:shrink-0">
-            <form action="{{ isset($city) ? route('cities.update', ['country' => $city->country->slug, 'city' => $city->slug,]) : route('cities.store') }}" method="POST" autocomplete="off" class="grid grid-cols-1 sm:grid-cols-[14rem_minmax(0,1fr)] lg:grid-cols-[14rem_18rem_auto] gap-3 items-start">
-                @csrf
-
-                @isset($city)
-                    @method('PUT')
-                @endisset
-
-                {{-- Country --}}
-                <fieldset class="min-w-0">
-                    <select id="countryIdSelect" name="country_id" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition @error('country_id') border-rose-400 focus:ring-rose-400 @enderror">
-                        <option value="">Select country</option>
-
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" @selected(old('country_id', $city->country_id ?? '') == $country->id)> {{ $country->name }} </option>
-                        @endforeach
-                    </select>
-
-                    @error('country_id')
-                        <p class="text-xs text-rose-600 mt-1.5 flex items-center gap-1">
-                            <i class="fa-solid fa-circle-exclamation"></i> {{ $message }}
-                        </p>
-                    @enderror
-                </fieldset>
-
-                {{-- City Name --}}
-                <fieldset class="min-w-0">
-                    <div class="relative">
-                        <i class="fa-solid fa-plus absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-                        <input id="cityNameInput" type="text" name="name" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white transition @error('name') border-rose-400 focus:ring-rose-400 @enderror" value="{{ old('name', $city->name ?? '') }}" placeholder="e.g. Dhaka, Khulna, Chittagong">
-                        <kbd class="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">/</kbd>
-                    </div>
-
-                    @error('name')
-                        <p class="text-xs text-rose-600 mt-1.5 flex items-center gap-1">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </fieldset>
-
-                {{-- Buttons --}}
-                <div class="flex items-center gap-2 w-full sm:col-span-2 lg:col-span-1 lg:w-auto">
-                    <button type="submit" class="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 shadow-sm transition cursor-pointer whitespace-nowrap">
-                        <i class="fa-solid {{ isset($city) ? 'fa-check' : 'fa-plus' }}"></i> {{ isset($city) ? 'Update' : 'Add City' }}
-                    </button>
-
-                    @isset($city)
-                        <a href="{{ route('cities.index') }}" class="flex-1 lg:flex-none inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium px-4 py-2.5 transition whitespace-nowrap">Cancel</a>
-                    @endisset
+        <div class="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div>
+                <p class="text-xs font-semibold tracking-widest uppercase text-indigo-200 mb-2">
+                    <i class="fa-solid fa-city text-sm"></i>
+                    <a href="{{ route('dashboard') }}">CareerVault</a> /
+                    <span>General</span> /
+                </p>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">Cities</h1>
+                    <sup id="cityTotal" class="rounded-full bg-white/20 text-white text-xs font-bold px-2 py-1 leading-none border border-white/30"> {{ $cities->count() }} </sup>
                 </div>
-            </form>
+                <p class="text-indigo-100/80 text-sm max-w-2xl mt-1">Manage cities and keep your company locations organized across your directory</p>
+
+                {{-- Quick stats, computed from the full country list --}}
+                <div class="flex flex-wrap items-center gap-2 mt-5">
+                    <div class="flex items-center gap-2 rounded-lg bg-white/10 border border-white/15 px-3 py-2">
+                        <i class="fa-solid fa-city text-sm text-indigo-200"></i>
+                        <span class="text-white text-sm font-semibold">{{ $totalCity }}</span>
+                        <span class="text-indigo-200 text-xs">City</span>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-lg bg-white/10 border border-white/15 px-3 py-2">
+                        <i class="fa-solid fa-earth-americas text-indigo-200 text-xs"></i>
+                        <span id="countryStatShowing" class="text-white text-sm font-semibold"> {{ $countriesWithCities->count() }} </span>
+                        <span class="text-indigo-200 text-xs">Country</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
+                {{-- Search (ids / data-url / value unchanged for existing JS) --}}
+                <div class="relative w-full sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input type="text" class="city-search-input w-full rounded-sm border-0 bg-white pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/70 shadow-sm focus:border-indigo-500 transition disabled:bg-slate-100 disabled:cursor-not-allowed" placeholder="Search city..." disabled aria-label="Search cities">
+                        <kbd class="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">/</kbd>
+                    <button id="clearCitySearch" type="button" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition" aria-label="Clear search">
+                        <i class="fa-solid fa-circle-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <button onclick="cityModal.showModal()" class="inline-flex items-center justify-center gap-2 rounded-sm bg-white hover:bg-indigo-50 text-indigo-700 text-sm font-medium px-4 py-2.5 shadow-sm transition shrink-0 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Add City
+                </button>
+            </div>
         </div>
-    </header>
+    </div>
 </section>
 
 {{-- Country + City Section --}}
@@ -206,23 +183,6 @@
                         <p id="selectedCountryHint" class="text-xs text-slate-400 mt-1">Select a country to view its cities.</p>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    {{-- Quick add shortcut --}}
-                    <button id="quickAddCityBtn" type="button" class="hidden shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium px-3 py-2.5 transition">
-                        <i class="fa-solid fa-plus text-[11px]"></i> Add city
-                    </button>
-
-                    {{-- City Search --}}
-                    <div class="relative w-full sm:w-64">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" class="city-search-input w-full rounded-xl border border-slate-300 pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition disabled:bg-slate-100 disabled:cursor-not-allowed" placeholder="Search city..." disabled aria-label="Search cities">
-                         <kbd class="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">/</kbd>
-                        <button id="clearCitySearch" type="button" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition" aria-label="Clear search">
-                            <i class="fa-solid fa-circle-xmark text-sm"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
 
             {{-- City result count --}}
@@ -288,9 +248,10 @@
                                                         </a>
 
                                                         {{-- Delete --}}
-                                                        <button type="button" class="open-delete-modal inline-flex items-center gap-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium px-3 py-1.5 transition" 
-                                                                data-action="{{ route('cities.destroy', ['country' => $item->country->slug, 'city' => $item->slug,]) }}" 
-                                                                data-name="{{ $item->name }}">
+                                                        <button type="button" class="delete-item inline-flex items-center gap-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium px-3 py-1.5 transition cursor-pointer"
+                                                            data-url="{{ route('cities.destroy', ['country' => $item->country->slug, 'city' => $item->slug,]) }}" 
+                                                            data-name="{{ $item->name }}"
+                                                            data-title="Delete City">
                                                             <i class="fa-solid fa-trash text-[11px]"></i> Delete
                                                         </button>
                                                     </div>
@@ -342,35 +303,92 @@
     </div>
 </section>
 
+{{-- Mobile floating "Add Citry" button — same trigger as the desktop button above --}}
+<button onclick="cityModal.showModal()" class="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-900/30 hover:bg-indigo-700 cursor-pointer" aria-label="Add Country">
+    <i class="fa-solid fa-plus text-lg"></i>
+</button>
+
 {{-- DELETE CONFIRMATION MODAL --}}
-<dialog id="deleteModal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg">Delete City</h3>
-        <div class="mt-6 text-slate-600">
-            Are you sure you want to delete <span id="deleteItemName" class="font-semibold text-rose-600"></span>?
-        </div>
+<div>
+    @include('modular.delete_modal')
+</div>
 
-        <div class="modal-action">
-            <form method="dialog">
-                <button class="btn btn-ghost">Cancel</button>
-            </form>
+{{-- Add / Edit City Modal --}}
+<dialog id="cityModal" class="modal">
+    <div class="modal-box max-w-3xl rounded-2xl">
+        {{-- Modal Header --}}
+        <h3 class="font-bold text-xl mb-5">
+            <i class="fa-solid fa-globe text-indigo-600 mr-2"></i>
+            {{ isset($city) ? 'Edit City' : 'Add City' }}
+        </h3>
 
-            <form id="deleteForm" method="POST">
-                @csrf
-                @method('DELETE')
+        <form action="{{ isset($city) ? route('cities.update', ['country' => $city->country->slug, 'city' => $city->slug,]) : route('cities.store') }}" method="POST" autocomplete="off" class="flex flex-col gap-4 w-full">
+            @csrf
 
-                <button type="submit" class="btn bg-rose-600 hover:bg-rose-700 text-white border-none">
-                    <i class="fa-solid fa-trash"></i> Delete
+            @isset($city)
+                @method('PUT')
+            @endisset
+
+            <div class="flex gap-4">
+                {{-- Country --}}
+                <fieldset class="w-max">
+                    <select id="countryIdSelect" name="country_id" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition @error('country_id') border-rose-400 focus:ring-rose-400 @enderror">
+                        <option value="">Select country</option>
+
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}" @selected(old('country_id', $city->country_id ?? '') == $country->id)> {{ $country->name }} </option>
+                        @endforeach
+                    </select>
+
+                    @error('country_id')
+                        <p class="text-xs text-rose-600 mt-1.5 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i> {{ $message }}
+                        </p>
+                    @enderror
+                </fieldset>
+
+                {{-- City Name --}}
+                <fieldset class="w-full">
+                    <div class="relative">
+                        <i class="fa-solid fa-plus absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                        <input id="cityNameInput" type="text" name="name" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white transition @error('name') border-rose-400 focus:ring-rose-400 @enderror" value="{{ old('name', $city->name ?? '') }}" placeholder="e.g. Dhaka, Khulna, Chittagong">
+                        <kbd class="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">/</kbd>
+                    </div>
+
+                    @error('name')
+                        <p class="text-xs text-rose-600 mt-1.5 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </fieldset>
+            </div>
+
+            {{-- Buttons --}}
+            <div class="flex justify-end items-end gap-4">
+                <button type="submit" class="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 shadow-sm transition cursor-pointer whitespace-nowrap">
+                    <i class="fa-solid {{ isset($city) ? 'fa-check' : 'fa-plus' }}"></i> {{ isset($city) ? 'Update' : 'Add City' }}
                 </button>
-            </form>
-        </div>
+
+                <a href="{{ route('cities.index') }}" class="flex-1 lg:flex-none inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium px-4 py-2.5 transition whitespace-nowrap">Cancel</a>
+            </div>
+        </form>
     </div>
 
-    {{-- Modal backdrop --}}
+    {{-- Close modal by clicking outside --}}
     <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button type="submit">close</button>
     </form>
 </dialog>
+
+{{-- Open Edit / Validation Modal --}}
+@if(isset($city))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            cityModal.showModal();
+        });
+    </script>
+@endif
 
 {{-- Tiny toast for copy-to-clipboard feedback --}}
 <div id="cvToast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-all duration-200"></div>

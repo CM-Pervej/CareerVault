@@ -1,4 +1,4 @@
-<div class="card bg-base-100 shadow-xl border border-base-300/60 rounded-2xl">
+<div class="card bg-base-100 shadow-xl border border-base-300/60 rounded-none sm:rounded-2xl">
     <div class="card-body">
         {{-- Header --}}
         <div class="flex items-start justify-between gap-4 pb-6 border-b border-base-300/60">
@@ -19,7 +19,7 @@
         </div>
 
         {{-- Fields --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- Company Name --}}
             <div class="lg:col-span-2 form-control">
                 <label for="name" class="label pb-1.5">

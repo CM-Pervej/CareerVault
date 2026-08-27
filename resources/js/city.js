@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const countryPanel = document.getElementById('countryPanel');
     const cityPanel = document.getElementById('cityPanel');
     const backToCountriesBtn = document.getElementById('backToCountries');
-    const quickAddCityBtn = document.getElementById('quickAddCityBtn');
     const countryIdSelect = document.getElementById('countryIdSelect');
     const countrySearchInput = document.getElementById('searchInput');
     const countryResultCount = document.getElementById('resultCount');
@@ -187,10 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (countryIdSelect) {
             countryIdSelect.value = selectedCountryId;
         }
-
-        if (quickAddCityBtn) {
-            quickAddCityBtn.classList.remove('hidden');
-        }
     }
 
     function bindCountryRow(row) {
@@ -238,20 +233,6 @@ document.addEventListener('DOMContentLoaded', function () {
             cityPanel?.classList.remove('hidden');
         }
     }, 150));
-
-    // -------------------------------------------------------------------
-    // Quick add: jump to the form, pre-filled with the browsed country
-    // -------------------------------------------------------------------
-
-    if (quickAddCityBtn) {
-        quickAddCityBtn.addEventListener('click', function () {
-            if (countryIdSelect && selectedCountryId) {
-                countryIdSelect.value = selectedCountryId;
-            }
-            document.getElementById('cityFormSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setTimeout(() => document.getElementById('cityNameInput')?.focus(), 350);
-        });
-    }
 
     // -------------------------------------------------------------------
     // Country search (with highlighting + debounce)

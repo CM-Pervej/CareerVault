@@ -1,4 +1,4 @@
-<div class="card bg-base-100 shadow-xl border border-base-300/60 rounded-2xl">
+<div class="card bg-base-100 shadow-xl border border-base-300/60 rounded-none sm:rounded-2xl">
     <div class="card-body p-6 lg:p-8">
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4 text-center sm:text-left">

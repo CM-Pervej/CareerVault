@@ -20,25 +20,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // import './bootstrap';
 
-// import { initCompanyForm, initCompanyPage } from './company';
 import initCompany from './company';
-import { initCrudPage, initDatabaseSearch } from './general';
 import './city';
-// import './company_filter';
+import initPlatform from './platform';
+import initGenerals from './general';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // initCompanyForm();
-    // initCompanyPage();
     initCompany();
-    initCrudPage();
+    initPlatform();
+    initGenerals();
 
-    document.querySelectorAll('[data-database-search]').forEach(element => {
-            initDatabaseSearch({
-                input: element.dataset.input,
-                container: element.dataset.container,
-                loading: element.dataset.loading,
-                url: element.dataset.url,
-            });
-        });
 });

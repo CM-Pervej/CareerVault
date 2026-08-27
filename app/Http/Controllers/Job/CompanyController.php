@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Models\Company;
 use App\Models\Country;
 use App\Models\Industry;
+use App\Models\Platform;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +20,7 @@ class CompanyController extends Controller
     public function index(Request $request)
     {
         $search = trim($request->input('search', ''));
+        $totalCompanies = Company::count();
 
         $companies = Company::query()->with(['countries', 'industries', 'cities',])
             ->when($search !== '', function ($query) use ($search) {
@@ -45,10 +47,10 @@ class CompanyController extends Controller
 
         // AJAX search/pagination request
         if ($request->ajax()) {
-            return response()->json(['html' => view('job.company.index', compact('companies'))->render(),]);
+            return response()->json(['html' => view('job.company.index', compact('companies', 'totalCompanies'))->render(),]);
         }
 
-        return view('job.company.index', compact('companies'));
+        return view('job.company.index', compact('companies', 'totalCompanies'));
     }
 
     /**
@@ -59,8 +61,9 @@ class CompanyController extends Controller
         $countries = Country::orderBy('name')->get();
         $industries = Industry::orderBy('name')->get();
         $cities = collect();
+        $platforms = Platform::orderBy('name')->get();
 
-        return view('job.company.create', compact('countries', 'industries', 'cities'));
+        return view('job.company.create', compact('countries', 'industries', 'cities', 'platforms'));
     }
 
     /**
@@ -116,12 +119,17 @@ class CompanyController extends Controller
             'emails' => $this->nullIfEmpty($validated['emails'] ?? null),
             'phones' => $this->nullIfEmpty($validated['phones'] ?? null),
             'address' => $this->nullIfEmpty($validated['address'] ?? null),
-            'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
+            // 'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
         ]);
 
         $company->countries()->sync($countryIds);
         $company->industries()->sync($validated['industry_ids'] ?? []);
         $company->cities()->sync($cityIds);
+        $this->syncPlatforms(
+            $company,
+            $validated['platform_ids'] ?? [],
+            $validated['platform_urls'] ?? [],
+        );
 
         return redirect()->route('companies.show', $company)->with('success', 'Company created successfully.');
     }
@@ -135,6 +143,7 @@ class CompanyController extends Controller
             'countries:id,name,iso_code',
             'industries:id,name',
             'cities:id,country_id,name',
+            'platforms:id,name,icon,color',
         ]);
 
         // Group cities by their country
@@ -148,10 +157,16 @@ class CompanyController extends Controller
      */
     public function edit(Company $company)
     {
-        $company->load(['countries:id,name', 'industries:id,name', 'cities:id,country_id,name',]);
+        $company->load([
+            'countries:id,name', 
+            'industries:id,name', 
+            'cities:id,country_id,name', 
+            'platforms:id,name,icon,color',
+        ]);
 
         $countries = Country::orderBy('name')->get();
         $industries = Industry::orderBy('name')->get();
+        $platforms = Platform::orderBy('name')->get();
 
         $countryIds = $company->countries->pluck('id')->toArray();
 
@@ -161,7 +176,7 @@ class CompanyController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'country_id', 'name',]);
 
-        return view('job.company.edit', compact('company', 'countries', 'industries', 'cities'));
+        return view('job.company.edit', compact('company', 'countries', 'industries', 'cities', 'platforms'));
     }
 
     /**
@@ -187,7 +202,7 @@ class CompanyController extends Controller
             'emails' => $this->nullIfEmpty($validated['emails'] ?? null),
             'phones' => $this->nullIfEmpty($validated['phones'] ?? null),
             'address' => $this->nullIfEmpty($validated['address'] ?? null),
-            'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
+            // 'social_links' => $this->nullIfEmpty($validated['social_links'] ?? null),
         ]);
 
         /*
@@ -196,6 +211,11 @@ class CompanyController extends Controller
         $company->countries()->sync($countryIds);
         $company->cities()->sync($cityIds);
         $company->industries()->sync($validated['industry_ids'] ?? []);
+        $this->syncPlatforms(
+            $company,
+            $validated['platform_ids'] ?? [],
+            $validated['platform_urls'] ?? [],
+        );
 
         return redirect()->route('companies.show', $company)->with('success', 'Company updated successfully.');
     }
@@ -237,12 +257,12 @@ class CompanyController extends Controller
                 ->values()
                 ->all(),
 
-            'social_links' => collect($request->input('social_links', []))
-                ->filter(
-                    fn ($item) => filled($item['platform'] ?? null) || filled($item['url'] ?? null)
-                )
-                ->values()
-                ->all(),
+            // 'social_links' => collect($request->input('social_links', []))
+            //     ->filter(
+            //         fn ($item) => filled($item['platform'] ?? null) || filled($item['url'] ?? null)
+            //     )
+            //     ->values()
+            //     ->all(),
         ]);
     }
 
@@ -267,9 +287,9 @@ class CompanyController extends Controller
             'address.*.address_type' => ['required_with:address.*.address', 'string', 'max:255',],
             'address.*.address' => ['required_with:address.*.address_type', 'string', 'max:255',],
 
-            'social_links' => ['nullable', 'array',],
-            'social_links.*.platform' => ['required_with:social_links.*.url', 'string', 'max:100',],
-            'social_links.*.url' => ['required_with:social_links.*.platform', 'url', 'max:255',],
+            // 'social_links' => ['nullable', 'array',],
+            // 'social_links.*.platform' => ['required_with:social_links.*.url', 'string', 'max:100',],
+            // 'social_links.*.url' => ['required_with:social_links.*.platform', 'url', 'max:255',],
 
             'country_ids' => ['nullable', 'array',],
             'country_ids.*' => ['integer', 'exists:countries,id',],
@@ -279,7 +299,32 @@ class CompanyController extends Controller
             
             'city_ids' => ['nullable', 'array',],
             'city_ids.*' => ['integer', 'exists:cities,id',],
+
+            'platform_ids' => ['nullable', 'array',],
+            'platform_ids.*' => ['integer', 'exists:platforms,id', 'distinct',],
+
+            'platform_urls' => ['nullable', 'array',],
+            'platform_urls.*' => ['required', 'url', 'max:255',],
         ]);
+    }
+
+    /**
+     * Sync platforms and their URLs.
+     * One company can have multiple different platforms.
+     */
+    private function syncPlatforms(Company $company,array $platformIds,array $platformUrls): void
+    {
+        $platforms = [];
+
+        foreach($platformIds as $platformId){
+            $platformId = (int)$platformId;
+
+            $platforms[$platformId] = [
+                'url' => $platformUrls[$platformId],
+            ];
+        }
+
+        $company->platforms()->sync($platforms);
     }
 
     /**

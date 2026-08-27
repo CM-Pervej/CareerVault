@@ -41,4 +41,11 @@ class Company extends Model
         return $this->belongsToMany(City::class)
                     ->withTimestamps();
     }
+
+    public function Platforms()
+    {
+        return $this->belongsToMany(Platform::class)
+            ->withPivot('url')
+            ->withTimestamps();
+    }
 }

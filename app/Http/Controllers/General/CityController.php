@@ -14,17 +14,31 @@ class CityController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim($request->input('search', ''));
+        $totalCity = City::count();
+
         $cities = City::with('country')
-                    ->orderBy('country_id', 'asc')
-                    ->orderBy('name', 'asc')
-                    ->get();
-                    // ->paginate(10);
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('country_id', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+            // ->paginate(200)
+            // ->withQueryString();
 
         $countries = Country::orderBy('name')->get();
 
-        return view('general.city', compact('cities', 'countries'));
+                // AJAX search/pagination request
+        if ($request->ajax()) {
+            return response()->json(['html' => view('general.city', compact('cities', 'countries', 'totalCity'))->render(),]);
+        }
+
+        return view('general.city', compact('cities', 'countries', 'totalCity'));
     }
 
     /**
@@ -80,6 +94,7 @@ class CityController extends Controller
     public function edit(Country $country, City $city)
     {
         abort_unless($city->country_id === $country->id, 404);
+        $totalCity = City::count();
 
         $cities = City::with('country')
             ->orderBy('name')
@@ -90,7 +105,8 @@ class CityController extends Controller
         return view('general.city', compact(
             'city',
             'cities',
-            'countries'
+            'countries',
+            'totalCity'
         ));
     }
 

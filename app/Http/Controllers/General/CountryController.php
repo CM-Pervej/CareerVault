@@ -12,10 +12,25 @@ class CountryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $countries = Country::orderBy('name')->get();
-        return view('general.country', compact('countries'));
+        $search = trim($request->input('search', ''));
+        $totalCountry = Country::count();
+
+        // $countries = Country::orderBy('name')->get();
+        $countries = Country::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(195)
+            ->withQueryString();
+
+        if($request->ajax()){
+            return response()->json(['html' => view('general.country', compact('countries', 'totalCountry'))->render(),]);
+        }
+
+        return view('general.country', compact('countries', 'totalCountry'));
     }
 
     /**
@@ -62,9 +77,10 @@ class CountryController extends Controller
      */
     public function edit(Country $country)
     {
-        $countries = Country::orderBy('name')->get();
+        $countries = Country::orderBy('name')->paginate(195);
+        $totalCountry = Country::count();
 
-        return view('general.country', compact('countries', 'country'));
+        return view('general.country', compact('countries', 'country', 'totalCountry'));
     }
 
     /**
@@ -101,6 +117,8 @@ class CountryController extends Controller
 
         $country->delete();
 
-        return redirect()->route('countries.index')->with('success', 'Country deleted successfully.');
+        return redirect()
+            ->route('countries.index')
+            ->with('success', 'Country deleted successfully.');
     }
 }

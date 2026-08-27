@@ -14,21 +14,22 @@ class IndustryController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $search = trim($request->input('search', ''));
+        $totalIndustry = Industry::count();
 
         $industries = Industry::query()
             ->when($search, function ($query, $search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
             ->orderBy('name', 'asc')
-            ->paginate(25)
+            ->paginate(50)
             ->withQueryString();
 
-        if ($request->ajax()) {
-            return view('general.partials.industry-table', compact('industries'))->render();
+        if($request->ajax()){
+            return response()->json(['html' => view('general.industry', compact('industries', 'totalIndustry'))->render(),]);
         }
 
-        return view('general.industry', compact('industries'));
+        return view('general.industry', compact('industries', 'totalIndustry'));
     }
 
     /**
@@ -62,7 +63,7 @@ class IndustryController extends Controller
      */
     public function show(Industry $industry)
     {
-        // return redirect()->route('industries.index');
+        return redirect()->route('industries.index');
     }
 
     /**
@@ -70,9 +71,10 @@ class IndustryController extends Controller
      */
     public function edit(Industry $industry)
     {
-        $industries = Industry::orderBy('name')->paginate(15);
+        $industries = Industry::orderBy('name')->paginate(50);
+        $totalIndustry = Industry::count();
 
-        return view('general.industry', compact('industries', 'industry'));
+        return view('general.industry', compact('industries', 'industry', 'totalIndustry'));
     }
 
     /**
@@ -98,6 +100,10 @@ class IndustryController extends Controller
      */
     public function destroy(Industry $industry)
     {
+        if ($industry->companies()->exists()) {
+            return redirect()->route('countries.index')->with('error', 'Cannot delete country assigned to companies.');
+        }
+
         $industry->delete();
 
         return redirect()

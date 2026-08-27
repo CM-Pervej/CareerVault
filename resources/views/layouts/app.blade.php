@@ -25,7 +25,7 @@
         .cv-name-link:hover{text-decoration:underline}
         .cv-tag{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.02em}
 
-                .cv-label{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.14em;opacity:.5;text-transform:uppercase}
+        .cv-label{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.14em;opacity:.5;text-transform:uppercase}
         .cv-tile{border:1px solid hsl(var(--bc)/.15);border-radius:.75rem;padding:1rem;transition:border-color .12s,background-color .12s}
         .cv-tile:hover{border-color:hsl(var(--p)/.5);background-color:hsl(var(--b2))}
         .cv-table thead th{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.14em;opacity:.5;text-transform:uppercase;font-weight:500}
@@ -36,7 +36,7 @@
  
     @include('layouts.navbar')
 
-    <main class="container mx-auto py-5 px-14 min-h-screen bg-base-200">
+    <main class="container mx-auto sm:py-5 sm:px-14 bg-base-200">
         @yield('content')
     </main>
 

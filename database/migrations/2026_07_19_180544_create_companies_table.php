@@ -25,7 +25,7 @@ return new class extends Migration
 
             $table->json('address')->nullable();
 
-            $table->json('social_links')->nullable();
+            // $table->json('social_links')->nullable();
 
             $table->timestamps();
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\General\CityController;
 use App\Http\Controllers\General\CountryController;
 use App\Http\Controllers\General\IndustryController;
 use App\Http\Controllers\Job\CompanyController;
+use App\Http\Controllers\job\PlatformController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -32,32 +33,23 @@ Route::middleware('auth')->group(function () {
 
     // Country 
     Route::resource('countries', CountryController::class);
-    // Route::resource('countries', CountryController::class)->except(['create', 'show']);
 
     // Industry
-    Route::resource('industries', IndustryController::class)->except(['create', 'show']);
+    Route::resource('industries', IndustryController::class);
 
     // City
-    Route::get('/cities', [CityController::class, 'index'])
-        ->name('cities.index');
+    Route::get('/cities', [CityController::class, 'index'])->name('cities.index');
+    Route::post('/cities', [CityController::class, 'store'])->name('cities.store');
+    Route::get('/cities/{country:slug}/{city:slug}/edit', [CityController::class, 'edit'])->name('cities.edit');
+    Route::put('/cities/{country:slug}/{city:slug}', [CityController::class, 'update'])->name('cities.update');
+    Route::delete('/cities/{country:slug}/{city:slug}', [CityController::class, 'destroy'])->name('cities.destroy');
 
-    Route::post('/cities', [CityController::class, 'store'])
-        ->name('cities.store');
-
-    Route::get('/cities/{country:slug}/{city:slug}/edit', [CityController::class, 'edit'])
-        ->name('cities.edit');
-
-    Route::put('/cities/{country:slug}/{city:slug}', [CityController::class, 'update'])
-        ->name('cities.update');
-
-    Route::delete('/cities/{country:slug}/{city:slug}', [CityController::class, 'destroy'])
-        ->name('cities.destroy');
-
+    // platform
+    route::resource('platforms', PlatformController::class);
+    
     // Company management (authenticated only)
     Route::resource('companies', CompanyController::class)->except(['index', 'show']);
-
-    Route::get('/companies/cities', [CompanyController::class, 'cities'])
-    ->name('companies.cities');
+    Route::get('/companies/cities', [CompanyController::class, 'cities'])->name('companies.cities');
 
 });
 
