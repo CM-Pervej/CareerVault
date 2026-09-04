@@ -24,6 +24,7 @@
                         <h1 class="text-2xl sm:text-3xl font-bold text-white">Companies</h1>
                         <sup id="companyTotal" class="rounded-full bg-white/20 text-white text-xs font-bold px-2 py-1 leading-none border border-white/30"> {{ $companies->total() }} </sup>
                     </div>
+                    {{-- <p class="text-green-600 text-4xl font-bold">ADD: Industries, Services and Technologies (See Bornomala)</p> --}}
                     <p class="text-indigo-100/80 text-sm max-w-2xl mt-1">Explore companies, discover their industries and locations, and keep your company directory organized.</p>
 
                     {{-- Quick stats. id="companyPagination" already carries data-total / data-per-page below,

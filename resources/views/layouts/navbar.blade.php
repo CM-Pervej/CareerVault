@@ -20,7 +20,7 @@
 
         {{-- Desktop Navigation --}}
         <nav class="hidden lg:flex items-center gap-0.5" id="main-nav">
-            <a href="{{ auth()->check() ? url('/dashboard') : url('/') }}" class="nav-link px-3 py-2 text-[13.5px] font-medium text-[#54565D] hover:text-[#12141A] rounded-lg hover:bg-[#F7F5F0] transition-colors duration-150">Dashboard</a>
+            <a href="{{ auth()->check() ? url('/dashboard') : url('/') }}" class="nav-link px-3 py-2 text-[13.5px] font-medium text-[#54565D] hover:text-[#12141A] rounded-lg hover:bg-[#F7F5F0] transition-colors duration-150">Home</a>
 
             {{-- Jobs --}}
             <div class="nav-dropdown relative" data-dropdown>
