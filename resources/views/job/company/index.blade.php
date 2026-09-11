@@ -19,6 +19,9 @@
                     <p class="text-xs font-semibold tracking-widest uppercase text-indigo-200 mb-2">
                         <i class="fa-solid fa-building mr-1"></i> 
                         <a href="{{ route('dashboard') }}">CareerVault</a> /
+                        <a href="{{ route('admin.dashboard') }}">
+    Admin
+</a>
                     </p>
                     <div class="flex items-center gap-2">
                         <h1 class="text-2xl sm:text-3xl font-bold text-white">Companies</h1>

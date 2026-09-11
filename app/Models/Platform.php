@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Platform extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory,SoftDeletes;
 
-    protected $fillable = [
+    protected $fillable=[
         'name',
         'slug',
         'official_name',
@@ -36,13 +36,13 @@ class Platform extends Model
     protected function casts(): array
     {
         return [
-            'account_required' => 'boolean',
-            'is_active' => 'boolean',
-            'is_bangladesh_focused' => 'boolean',
-            'founded_month' => 'integer',
-            'founded_year' => 'integer',
-            'sort_order' => 'integer',
-            'last_verified_at' => 'datetime',
+            'account_required'=>'boolean',
+            'is_active'=>'boolean',
+            'is_bangladesh_focused'=>'boolean',
+            'founded_month'=>'integer',
+            'founded_year'=>'integer',
+            'sort_order'=>'integer',
+            'last_verified_at'=>'datetime',
         ];
     }
 
@@ -61,5 +61,25 @@ class Platform extends Model
     public function platformPages()
     {
         return $this->hasMany(PlatformPage::class);
+    }
+
+    public function connectedPlatforms()
+    {
+        return $this->belongsToMany(
+            Platform::class,
+            'platform_platforms',
+            'platform_id',
+            'connected_platform_id'
+        )->withPivot('account_url')->withTimestamps();
+    }
+
+    public function connectedFromPlatforms()
+    {
+        return $this->belongsToMany(
+            Platform::class,
+            'platform_platforms',
+            'connected_platform_id',
+            'platform_id'
+        )->withPivot('account_url')->withTimestamps();
     }
 }
