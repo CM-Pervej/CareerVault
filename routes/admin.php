@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlatformConnectionController;
 use App\Http\Controllers\Admin\PlatformController;
+use App\Http\Controllers\Admin\PlatformPageController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,9 @@ Route::middleware(['web','auth','admin'])
         Route::resource('platform-connections', PlatformConnectionController::class)
             ->parameters(['platform-connections' => 'platform'])
             ->except(['show', 'destroy']);
+
+        Route::get('platform-pages/trash', [PlatformPageController::class, 'trash'])->name('platform-pages.trash');
+        Route::patch('platform-pages/{platformPage}/restore', [PlatformPageController::class, 'restore'])->name('platform-pages.restore');
+        Route::delete('platform-pages/{platformPage}/force-delete', [PlatformPageController::class, 'forceDelete'])->name('platform-pages.force-delete');
+        Route::resource('platform-pages', PlatformPageController::class);
 });

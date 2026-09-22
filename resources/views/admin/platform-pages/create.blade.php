@@ -1,13 +1,14 @@
 @extends('layouts.admin.app')
 
-@section('title','Add Platform Connections')
-@section('page_title','Connect Platforms')
+@section('title', 'Create Platform Page | CareerVault')
+@section('page_title','Add Platform Pages')
 
 @section('content')
+
 <div class="mx-auto max-w-5xl space-y-6">
     <div>
-        <h1 class="cv-admin-title text-3xl sm:text-4xl">Add Platform Connections</h1>
-        <p class="mt-1 text-sm text-base-content/60">Add multiple official platform presences in one operation.</p>
+        <h1 class="cv-admin-title text-3xl sm:text-4xl">Create Platform Page</h1>
+        <p class="text-sm text-base-content/60">Add an official page or resource to a job platform.</p>
     </div>
 
     @if($errors->any())
@@ -24,6 +25,10 @@
         </div>
     @endif
 
-    @include('admin.platform-connections._form')
+    <form method="POST" action="{{ route('admin.platform-pages.store') }}">
+        @csrf
+
+        @include('admin.platform-pages._form')
+    </form>
 </div>
 @endsection

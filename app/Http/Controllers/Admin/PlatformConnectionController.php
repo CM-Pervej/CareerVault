@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\PlatformConnectionRequest;
 use App\Models\Platform;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -14,30 +15,54 @@ class PlatformConnectionController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Platform::class);
 
-        $platforms = Platform::query()
+        $search = trim($request->input('search', ''));
+        $connectionStatus = $request->input('connection_status', 'all');
+        $activityStatus = $request->input('activity_status', 'all');
+        $sort = $request->input('sort', 'name_asc');
+
+        $platformQuery = Platform::query()
             ->withCount('connectedPlatforms')
             ->with([
                 'connectedPlatforms:id,name,slug,logo,icon,color'
             ])
-            ->orderBy('name')
-            ->get([
-                'id',
-                'name',
-                'slug',
-                'logo',
-                'icon',
-                'color',
-                'is_active',
-            ]);
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%");
+                });
+            })
+            ->when($connectionStatus === 'connected', function ($query) {
+                $query->has('connectedPlatforms');
+            })
+            ->when($connectionStatus === 'unconnected', function ($query) {
+                $query->doesntHave('connectedPlatforms');
+            })
+            ->when($activityStatus === 'active', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->when($activityStatus === 'inactive', function ($query) {
+                $query->where('is_active', false);
+            });
 
-        return view(
-            'admin.platform-connections.index',
-            compact('platforms')
-        );
+        match ($sort) {
+            'name_desc' => $platformQuery->orderByDesc('name'),
+            'connections_desc' => $platformQuery->orderByDesc('connected_platforms_count')->orderBy('name'),
+            'connections_asc' => $platformQuery->orderBy('connected_platforms_count')->orderBy('name'),
+            default => $platformQuery->orderBy('name'),
+        };
+
+        $platforms = $platformQuery->get(['id', 'name', 'slug', 'logo', 'icon', 'color', 'is_active',]);
+        $totalPlatforms = Platform::count();
+        $platformsWithConnections = Platform::has('connectedPlatforms')->count();
+        $totalConnections = DB::table('platform_platforms')->count();
+        $activePlatforms = Platform::where('is_active', true)->count();
+        $inactivePlatforms = $totalPlatforms - $activePlatforms;
+
+        return view('admin.platform-connections.index', compact('platforms', 'totalPlatforms', 'platformsWithConnections', 'totalConnections', 'activePlatforms', 'inactivePlatforms', 'search', 'connectionStatus', 'activityStatus', 'sort'));
     }
 
     public function create(): View

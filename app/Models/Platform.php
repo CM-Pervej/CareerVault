@@ -60,7 +60,9 @@ class Platform extends Model
 
     public function platformPages()
     {
-        return $this->hasMany(PlatformPage::class);
+        return $this->hasMany(PlatformPage::class)
+            ->orderBy('sort_order')
+            ->orderBy('name');
     }
 
     public function connectedPlatforms()

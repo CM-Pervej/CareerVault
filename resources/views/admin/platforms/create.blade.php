@@ -5,7 +5,6 @@
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5">
-
     <div>
         <div class="cv-admin-label mb-2 text-primary">
             Directory / Platforms / Create

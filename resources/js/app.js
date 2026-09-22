@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // import './bootstrap';
 
+import './admin/components/lock';
 import initCompany from './company';
 import './city';
 import initPlatform from './platform';
