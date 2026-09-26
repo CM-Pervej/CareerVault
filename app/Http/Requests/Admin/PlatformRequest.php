@@ -93,13 +93,13 @@ class PlatformRequest extends FormRequest
             'logo'=>[
                 'nullable',
                 'string',
-                'max:255',
+                'max:2048',
             ],
 
             'cover_image'=>[
                 'nullable',
                 'string',
-                'max:255',
+                'max:2048',
             ],
 
             'sort_order'=>[

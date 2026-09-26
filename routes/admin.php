@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlatformConnectionController;
 use App\Http\Controllers\Admin\PlatformController;
+use App\Http\Controllers\Admin\PlatformGroupController;
 use App\Http\Controllers\Admin\PlatformPageController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -31,4 +32,9 @@ Route::middleware(['web','auth','admin'])
         Route::patch('platform-pages/{platformPage}/restore', [PlatformPageController::class, 'restore'])->name('platform-pages.restore');
         Route::delete('platform-pages/{platformPage}/force-delete', [PlatformPageController::class, 'forceDelete'])->name('platform-pages.force-delete');
         Route::resource('platform-pages', PlatformPageController::class);
+
+        Route::get('platform-groups/trash', [PlatformGroupController::class, 'trash'])->name('platform-groups.trash');
+        Route::patch('platform-groups/{platformGroup}/restore', [PlatformGroupController::class, 'restore'])->name('platform-groups.restore');
+        Route::delete('platform-groups/{platformGroup}/force-delete', [PlatformGroupController::class, 'forceDelete'])->name('platform-groups.force-delete');
+        Route::resource('platform-groups', PlatformGroupController::class);
 });

@@ -11,26 +11,10 @@ class Platform extends Model
     use HasFactory,SoftDeletes;
 
     protected $fillable=[
-        'name',
-        'slug',
-        'official_name',
-        'base_url',
-        'job_url',
-        'short_desc',
-        'description',
-        'job_type',
-        'business_model',
-        'account_required',
-        'is_active',
-        'color',
-        'icon',
-        'logo',
-        'cover_image',
-        'sort_order',
-        'is_bangladesh_focused',
-        'founded_month',
-        'founded_year',
-        'last_verified_at',
+        'name', 'slug', 'official_name', 'base_url', 'job_url',
+        'short_desc', 'description', 'job_type', 'business_model', 'account_required', 'is_active',
+        'color', 'icon', 'logo', 'cover_image', 'sort_order',
+        'is_bangladesh_focused', 'founded_month', 'founded_year', 'last_verified_at',
     ];
 
     protected function casts(): array
@@ -61,6 +45,13 @@ class Platform extends Model
     public function platformPages()
     {
         return $this->hasMany(PlatformPage::class)
+            ->orderBy('sort_order')
+            ->orderBy('name');
+    }
+
+    public function platformGroups()
+    {
+        return $this->hasMany(PlatformGroup::class)
             ->orderBy('sort_order')
             ->orderBy('name');
     }

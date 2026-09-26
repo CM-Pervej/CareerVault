@@ -171,7 +171,7 @@
 
                 <div class="p-2 sm:p-5">
                     @if($platformPage->description)
-                        <div class="whitespace-pre-line text-sm leading-7 text-base-content/75"> {{ $platformPage->description }} </div>
+                        <div class="whitespace-pre-line text-justify text-sm leading-7 text-base-content/75"> {{ $platformPage->description }} </div>
                     @else
                         <div class="flex items-center gap-3 rounded-xl border border-dashed border-base-300 p-4">
                             <i class="fa-regular fa-file-lines text-base-content/30"></i>
@@ -233,15 +233,35 @@
 
                     {{-- Created --}}
                     <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
-                        <span class="text-sm text-base-content/60">Created</span>
+                        <span class="text-sm text-base-content/60">Created At</span>
                         <span class="text-right text-sm font-semibold"> {{ $platformPage->created_at->format('M d, Y') }} </span>
                     </div>
 
                     {{-- Deleted --}}
                     @if($platformPage->trashed())
                         <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
-                            <span class="text-sm text-base-content/60">Deleted</span>
-                            <span class="text-right text-sm font-semibold text-warning"> {{ $platformPage->deleted_at?->format('M d, Y H:i') ?? 'Unknown' }} </span>
+                            <span class="text-sm text-base-content/60">Deleted At</span>
+                            <span class="text-right text-sm font-semibold text-warning"> {{ $platformPage->deleted_at?->format('d M, Y, H:i A') ?? 'Unknown' }} </span>
+                        </div>
+                    @endif
+
+                    @if($platformPage->trashed())
+                        <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
+                            <span class="text-sm text-base-content/60">Deleted By</span>
+
+                            @if($platformPage->deletedBy)
+                                <div class="min-w-0 text-right">
+                                    <div class="truncate font-bold text-warning" title="{{ $platformPage->deletedBy->name }}">
+                                        {{ $platformPage->deletedBy->name }}
+                                    </div>
+
+                                    <div class="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-500">
+                                        {{ str_replace('_', ' ', $platformPage->deletedBy->role) }}
+                                    </div>
+                                </div>
+                            @else
+                                <span class="text-sm font-semibold text-base-content/40">Unknown user</span>
+                            @endif
                         </div>
                     @endif
                 </div>

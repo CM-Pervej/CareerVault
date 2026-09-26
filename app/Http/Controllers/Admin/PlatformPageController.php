@@ -214,11 +214,7 @@ class PlatformPageController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.platform-pages.trash', compact(
-            'pages',
-            'platforms',
-            'pageTypes'
-        ));
+        return view('admin.platform-pages.trash', compact('pages', 'platforms', 'pageTypes'));
     }
 
     public function restore(string $platformPage): RedirectResponse
@@ -230,7 +226,7 @@ class PlatformPageController extends Controller
         $this->authorize('restore',$platformPage);
 
         $platformPage->update([
-            'deleted_by'=>null,
+            'deleted_by' => null,
         ]);
 
         $platformPage->restore();
@@ -246,7 +242,7 @@ class PlatformPageController extends Controller
             ->where('slug',$platformPage)
             ->firstOrFail();
 
-        $this->authorize('forceDelete',$platformPage);
+        $this->authorize('forceDelete', $platformPage);
 
         $platformPage->forceDelete();
 

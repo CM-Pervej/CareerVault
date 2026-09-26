@@ -1,19 +1,19 @@
 @extends('layouts.admin.app')
 
-@section('title', 'Create Platform Page | CareerVault')
-@section('page_title','Pages / Add')
+@section('title', 'Create Platform Group | CareerVault')
+@section('page_title','Groups / Add')
 
 @section('content')
 <div class="space-y-3 p-4 sm:p-6">
     <div>
         <div class="flex items-center gap-3">
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <i class="fa-solid fa-file-circle-plus text-lg"></i>
+                <i class="fa-solid fa-users text-lg"></i>
             </div>
 
             <div>
-                <h1 class="cv-admin-title text-3xl sm:text-4xl">Create Platform Page</h1>
-                <p class="text-sm text-base-content/60">Add an official page or resource to a job platform.</p>
+                <h1 class="cv-admin-title text-3xl sm:text-4xl">Create Platform Group</h1>
+                <p class="text-sm text-base-content/60">Add an official group or resource to a job platform.</p>
             </div>
         </div>
     </div>
@@ -36,10 +36,10 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.platform-pages.store') }}">
+    <form method="POST" action="{{ route('admin.platform-groups.store') }}" enctype="multipart/form-data">
         @csrf
 
-        @include('admin.platform-pages._form')
+        @include('admin.platform-groups._form')
     </form>
 </div>
 @endsection
