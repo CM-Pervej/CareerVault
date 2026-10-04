@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('admin.platform-pages.update', $platformPage) }}">
+    <form method="POST" action="{{ route('admin.platform-pages.update', $platformPage) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 

@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('title','Platform Pages')
+@section('title', 'Platform Pages')
 
 @section('content')
 <div class="space-y-3 p-4 sm:p-6">
@@ -15,14 +15,14 @@
                     <h1 class="cv-admin-title text-3xl sm:text-4xl whitespace-nowrap text-primary">Platform Pages</h1>
                 </div>
 
-                <p class="mt-2 text-sm leading-6 text-base-content/65 text-center sm:text-left">Manage official pages, profiles, and resources belonging to CareerVault platforms.</p>
+                <p class="mt-2 text-sm leading-6 text-base-content/65 text-center sm:text-left">Manage pages and destinations associated with job platforms.</p>
             </div>
 
             <div class="flex w-full gap-2 sm:w-auto">
                 <a href="{{ route('admin.platform-pages.trash') }}" class="btn btn-ghost min-w-0 flex-1 gap-2 border border-base-300 sm:flex-none sm:border-transparent">
                     <i class="fa-solid fa-trash-can"></i> Trash
                     @if($trashedPagesCount > 0)
-                        <span class="badge badge-error badge-sm">{{ number_format($trashedPagesCount) }}</span>
+                        <span class="badge badge-error badge-sm"> {{ number_format($trashedPagesCount) }} </span>
                     @endif
                 </a>
 
@@ -33,13 +33,14 @@
         </div>
     </header>
 
-    {{-- Statistics --}}
+    {{-- ========================= STATISTICS ========================= --}}
     <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm" data-section="pageStates" open>
         <summary class="flex items-center justify-between gap-3 p-4 hover:bg-base-200/40">
             <span class="flex min-w-0 items-center gap-2.5">
                 <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-base-200 text-base-content/60">
                     <i class="fa-solid fa-chart-simple text-xs"></i>
                 </span>
+
                 <span class="min-w-0">
                     <span class="block text-sm font-semibold">Statistics</span>
                     <span class="block truncate text-xs text-base-content/50">Overview of platform pages</span>
@@ -48,9 +49,9 @@
 
             <i class="fa-solid fa-chevron-down cv-chevron text-xs text-base-content/50"></i>
         </summary>
-    
+
         {{-- ===================== OVERVIEW STATS ====================== --}}
-        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 sm:p-1 bg-[radial-gradient(circle_at_center,_theme(colors.gray.200),_theme(colors.gray.100))]">
+        <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:p-1 bg-[radial-gradient(circle_at_center,_theme(colors.gray.200),_theme(colors.gray.100))]">
             {{-- Total --}}
             <div class="sm:card border border-base-300 bg-base-100 shadow-sm">
                 <div class="card-body p-5">
@@ -59,21 +60,18 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-file-lines"></i> Pages
                             </div>
-    
                             <div class="mt-2 text-3xl font-black"> {{ number_format($totalPages) }} </div>
                         </div>
-    
                         <div class="flex size-10 items-center justify-center rounded-lg bg-info/10 text-info">
-                            <i class="fa-solid fa-layer-group"></i>
+                            <i class="fa-solid fa-file-lines"></i>
                         </div>
                     </div>
-    
                     <div class="flex items-center gap-1.5 text-xs text-base-content/50">
-                        <i class="fa-solid fa-database"></i> Total directory pages
+                        <i class="fa-solid fa-database"></i> Total platform pages
                     </div>
                 </div>
             </div>
-    
+
             {{-- Active --}}
             <div class="sm:card border border-base-300 bg-base-100 shadow-sm">
                 <div class="card-body p-5">
@@ -82,21 +80,18 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-circle-check"></i> Active
                             </div>
-    
                             <div class="mt-2 text-3xl font-black"> {{ number_format($activePages) }} </div>
                         </div>
-    
                         <div class="flex size-10 items-center justify-center rounded-lg bg-success/10 text-success">
                             <i class="fa-solid fa-toggle-on"></i>
                         </div>
                     </div>
-    
                     <div class="flex items-center gap-1.5 text-xs text-base-content/50">
-                        <i class="fa-solid fa-eye"></i> Currently visible pages
+                        <i class="fa-solid fa-eye"></i> Currently active pages
                     </div>
                 </div>
             </div>
-    
+
             {{-- Inactive --}}
             <div class="sm:card border border-base-300 bg-base-100 shadow-sm">
                 <div class="card-body p-5">
@@ -105,23 +100,20 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-circle-exclamation"></i> Inactive
                             </div>
-    
                             <div class="mt-2 text-3xl font-black"> {{ number_format($inactivePages) }} </div>
                         </div>
-    
                         <div class="flex size-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
                             <i class="fa-solid fa-toggle-off"></i>
                         </div>
                     </div>
-    
                     <div class="flex items-center gap-1.5 text-xs text-base-content/50">
-                        <i class="fa-solid fa-eye-slash"></i> Hidden from the directory
+                        <i class="fa-solid fa-eye-slash"></i> Hidden or inactive pages
                     </div>
                 </div>
             </div>
-    
+
             {{-- Trash --}}
-            <a href="{{ route('admin.platform-pages.trash') }}" class="sm:card border border-base-300 bg-base-100 shadow-sm hover:border-error/30 hover:bg-error/[0.03]">
+            <a href="{{ route('admin.platform-pages.trash', $platformSlug ? ['platform' => $platformSlug] : []) }}" class="sm:card border border-base-300 bg-base-100 shadow-sm hover:border-error/30 hover:bg-error/[0.03]">
                 <div class="card-body p-5">
                     <div class="flex items-start justify-between">
                         <div>
@@ -130,12 +122,10 @@
                             </div>
                             <div class="mt-2 text-3xl font-black"> {{ number_format($trashedPagesCount) }} </div>
                         </div>
-    
                         <div class="flex size-10 items-center justify-center rounded-lg bg-error/10 text-error">
                             <i class="fa-solid fa-recycle"></i>
                         </div>
                     </div>
-    
                     <div class="flex items-center gap-1.5 text-xs text-base-content/50">
                         <i class="fa-solid fa-clock-rotate-left"></i> Soft-deleted pages
                     </div>
@@ -144,162 +134,251 @@
         </div>
     </details>
 
-    {{-- Filters --}}
+    {{-- ========================= FILTERS ========================= --}}
     <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm" data-section="pageFilters" open>
         <summary class="flex items-center justify-between gap-3 p-4 hover:bg-base-200/40">
             <span class="flex min-w-0 items-center gap-2.5">
                 <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                     <i class="fa-solid fa-sliders text-xs"></i>
                 </span>
+
                 <span class="min-w-0">
                     <span class="block text-sm font-semibold">Filter Pages</span>
-                    <span class="block truncate text-xs text-base-content/50">Narrow the trash list by platform or page type</span>
+                    <span class="block truncate text-xs text-base-content/50">Narrow the list by platform, type, access, or status</span>
                 </span>
             </span>
 
             <i class="fa-solid fa-chevron-down cv-chevron text-xs text-base-content/50"></i>
         </summary>
-    
+
         <div class="rounded-lg border border-base-300 bg-base-100 shadow-sm">
             <form method="GET" action="{{ route('admin.platform-pages.index') }}">
+                {{-- Filter Fields --}}
                 <div class="border-b border-base-300 p-4 sm:p-5">
-                    <div class="flex flex-col gap-4 xl:flex-row xl:items-end">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
                         {{-- Search --}}
-                        <div class="form-control min-w-0 flex-1">
+                        <div class="form-control min-w-0 sm:col-span-2 lg:col-span-2">
                             <div class="label py-0 pb-1.5">
                                 <span class="label-text text-xs font-bold">
                                     <i class="fa-brands fa-searchengin mr-1"></i> Search
                                 </span>
                             </div>
-    
-                            <label class="input input-bordered flex items-center gap-3">
-                                <i class="fa-solid fa-magnifying-glass text-base-content/40"></i>
-                                <input type="search" name="search" value="{{ $search }}" placeholder="Search page name, description or platform..." class="grow"/>
-    
+
+                            <label class="input input-bordered flex w-full min-w-0 items-center gap-3">
+                                <i class="fa-solid fa-magnifying-glass shrink-0 text-base-content/40"></i>
+                                <input type="text" name="search" value="{{ $search }}" placeholder="Search pages..." class="min-w-0 grow"/>
+
                                 @if($search)
-                                    <a href="{{ route('admin.platform-pages.index',request()->except('search')) }}" class="btn btn-ghost btn-xs btn-circle">
+                                    <a href="{{ route('admin.platform-pages.index', request()->except('search')) }}" class="btn btn-ghost btn-xs btn-circle shrink-0">
                                         <i class="fa-solid fa-xmark"></i>
                                     </a>
                                 @endif
                             </label>
                         </div>
-    
+
                         {{-- Platform --}}
-                        <label class="form-control w-full xl:w-56">
+                        <label class="form-control min-w-0">
                             <div class="label py-0 pb-1.5">
                                 <span class="label-text text-xs font-bold">
                                     <i class="fa-solid fa-layer-group mr-1"></i> Platform
                                 </span>
                             </div>
-    
-                            <select name="platform" class="select select-bordered">
+
+                            <select name="platform" class="select select-bordered w-full min-w-0">
                                 <option value="">Select</option>
-    
                                 @foreach($platforms as $item)
-                                    <option value="{{ $item->slug }}" @selected($platformSlug === $item->slug)>{{ $item->name }}</option>
+                                    <option value="{{ $item->slug }}" @selected($platformSlug === $item->slug)> {{ $item->name }} </option>
                                 @endforeach
                             </select>
                         </label>
-    
+
                         {{-- Page Type --}}
-                        <label class="form-control w-full xl:w-52">
+                        <label class="form-control min-w-0">
                             <div class="label py-0 pb-1.5">
                                 <span class="label-text text-xs font-bold">
                                     <i class="fa-solid fa-shapes mr-1"></i> Page Type
                                 </span>
                             </div>
-    
-                            <select name="page_type" class="select select-bordered">
+
+                            <select name="page_type" class="select select-bordered w-full min-w-0">
                                 <option value="">Select</option>
-    
                                 @foreach($pageTypes as $type)
-                                    <option value="{{ $type }}" @selected($pageType === $type)>{{ $type }}</option>
+                                    <option value="{{ $type }}" @selected($pageType === $type)> {{ $type }} </option>
                                 @endforeach
                             </select>
                         </label>
-    
+
+                        {{-- Access --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-lock mr-1"></i> Access
+                                </span>
+                            </div>
+
+                            <select name="access_type" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                <option value="public" @selected($accessType === 'public')>Public</option>
+                                <option value="members_only" @selected($accessType === 'members_only')>Members Only</option>
+                                <option value="private" @selected($accessType === 'private')>Private</option>
+                            </select>
+                        </label>
+
                         {{-- Status --}}
-                        <label class="form-control w-full xl:w-44">
+                        <label class="form-control min-w-0">
                             <div class="label py-0 pb-1.5">
                                 <span class="label-text text-xs font-bold">
                                     <i class="fa-solid fa-power-off mr-1"></i> Status
                                 </span>
                             </div>
-    
-                            <select name="status" class="select select-bordered">
+
+                            <select name="status" class="select select-bordered w-full min-w-0">
                                 <option value="">Select</option>
-                                <option value="active" @selected($status === 'active')>Active only</option>
-                                <option value="inactive" @selected($status === 'inactive')>Inactive only</option>
+                                <option value="active" @selected($status === 'active')>Active</option>
+                                <option value="inactive" @selected($status === 'inactive')>Inactive</option>
+                            </select>
+                        </label>
+
+                        {{-- Bangladesh Focus --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-flag mr-1"></i> Bangladesh Focus
+                                </span>
+                            </div>
+
+                            <select name="bangladesh_focus" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                <option value="focused" @selected($bangladeshFocus === 'focused')>Yes</option>
+                                <option value="general" @selected($bangladeshFocus === 'general')>No</option>
                             </select>
                         </label>
                     </div>
-    
+
                     {{-- Filter Actions --}}
-                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2 text-xs text-base-content/50">
+                    <div class="mt-5 flex flex-col gap-4 border-t border-base-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        {{-- Applied Filters --}}
+                        <div class="flex min-w-0 flex-wrap items-center gap-2 text-xs text-base-content/50">
                             <span class="flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter"></i> Filters applied:
+                                <i class="fa-solid fa-filter"></i>
+                                <span>Filters applied:</span>
                             </span>
-    
+
                             @if($search)
                                 <span class="badge badge-sm badge-primary gap-1.5">
                                     <i class="fa-solid fa-magnifying-glass"></i> Search
                                 </span>
                             @endif
-    
+
                             @if($platformSlug)
                                 <span class="badge badge-sm badge-info gap-1.5">
                                     <i class="fa-solid fa-layer-group"></i> {{ $platform->name ?? $platformSlug }}
                                 </span>
                             @endif
-    
+
                             @if($pageType)
                                 <span class="badge badge-sm badge-secondary gap-1.5">
                                     <i class="fa-solid fa-shapes"></i> {{ $pageType }}
                                 </span>
                             @endif
-    
-                            @if($status)
+
+                            @if($accessType)
+                                <span class="badge badge-sm badge-accent gap-1.5">
+                                    <i class="fa-solid fa-lock"></i> {{ str_replace('_', ' ', ucfirst($accessType)) }}
+                                </span>
+                            @endif
+
+                            @if($status !== null)
                                 <span class="badge badge-sm badge-warning gap-1.5">
                                     <i class="fa-solid fa-power-off"></i> {{ ucfirst($status) }}
                                 </span>
                             @endif
-    
-                            @if($search || $platformSlug || $pageType || $status)
+
+                            @if($bangladeshFocus)
+                                <span class="badge badge-sm badge-success gap-1.5">
+                                    <i class="fa-solid fa-flag"></i> {{ $bangladeshFocus === 'focused' ? 'Bangladesh Focused' : 'General' }}
+                                </span>
+                            @endif
+
+                            @if($search || $platformSlug || $pageType || $accessType || $status !== null || $bangladeshFocus)
                                 <a href="{{ route('admin.platform-pages.index') }}" class="link link-error font-semibold">Clear all</a>
                             @else
                                 <span class="text-base-content/30">None</span>
                             @endif
                         </div>
-    
-                        <button type="submit" class="btn btn-sm btn-primary gap-2">
+
+                        {{-- Apply --}}
+                        <button type="submit" class="btn btn-sm btn-primary w-full shrink-0 gap-2 sm:w-auto">
                             <i class="fa-solid fa-filter"></i> Apply Filters
                         </button>
                     </div>
                 </div>
+
+                {{-- Result Summary --}}
+                <div class="flex flex-col gap-2 px-5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-list text-base-content/40"></i>
+
+                        <span>
+                            Showing <strong>{{ $pages->count() }}</strong> {{ $pages->count() === 1 ? 'page' : 'pages' }}
+                        </span>
+
+                        @if($search || $platformSlug || $pageType || $accessType || $status !== null || $bangladeshFocus)
+                            <span class="text-base-content/35">of</span>
+                            <span class="font-semibold text-base-content/60"> {{ number_format($totalPages) }} </span>
+                        @endif
+                    </div>
+
+                    <div class="text-xs text-base-content/40">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Platform pages and destinations
+                    </div>
+                </div>
             </form>
-    
-            {{-- Result Summary --}}
-            <div class="flex flex-col gap-2 px-5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-list text-base-content/40"></i>
-    
-                    <span>
-                        Showing <strong>{{ $pages->count() }}</strong> {{ Str::plural('page',$pages->count()) }}
-                    </span>
-    
-                    @if($search || $platformSlug || $pageType || $status)
-                        <span class="text-base-content/35">of</span>
-                        <span class="font-semibold text-base-content/60"> {{ number_format($totalPages) }} </span>
-                    @endif
-                </div>
-    
-                <div class="text-xs text-base-content/40">
-                    <i class="fa-solid fa-circle-info mr-1"></i> Official platform pages and resources
-                </div>
-            </div>
         </div>
     </details>
+
+    {{-- ======================= ACTIVE FILTERS ===================== --}}
+    @if($search || $platform || $pageType || $accessType || $status !== null || $bangladeshFocus)
+        <div class="flex flex-wrap items-center gap-2 px-1">
+            <span class="text-xs font-semibold text-base-content/50">Active filters:</span>
+
+            @if($search)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search: {{ $search }}
+                </span>
+            @endif
+
+            @if($platform)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-layer-group"></i> Platform: {{ $platform->name }}
+                </span>
+            @endif
+
+            @if($pageType)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-shapes"></i> Type: {{ $pageType }}
+                </span>
+            @endif
+
+            @if($accessType)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-lock"></i> Access: {{ str_replace('_', ' ', ucfirst($accessType)) }}
+                </span>
+            @endif
+
+            @if($status !== null)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-power-off"></i> Status: {{ ucfirst($status) }}
+                </span>
+            @endif
+
+            @if($bangladeshFocus)
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-flag"></i> {{ $bangladeshFocus === 'focused' ? 'Bangladesh Focused' : 'General' }}
+                </span>
+            @endif
+        </div>
+    @endif
 
     {{-- ======================= PAGE DIRECTORY ===================== --}}
     <div class="rounded-lg sm:border sm:border-gray-200 sm:shadow-sm mt-10 sm:mt-5">
@@ -308,27 +387,26 @@
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <i class="fa-solid fa-file-circle-check"></i>
+                        <i class="fa-solid fa-file-lines"></i>
                     </div>
-
                     <span class="whitespace-nowrap">Platform Page Directory</span>
-
+                    
                     <button type="button" class="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:text-primary" onclick="document.getElementById('platform-access-info-modal').showModal()" aria-label="Platform access information" title="About platform access">
                         <i class="fa-solid fa-circle-info"></i>
                     </button>
                 </div>
 
-                <div class="badge badge-outline gap-1.5 whitespace-nowrap">
+                <div class="badge badge-outline gap-1.5">
                     <i class="fa-solid fa-file-lines"></i>
-                    {{ number_format($totalPages) }}
-                    {{ Str::plural('page',$totalPages) }}
+                    {{ number_format($pages->total()) }}
+                    {{ $pages->total() === 1 ? 'page' : 'pages' }}
                 </div>
             </div>
-            
-            <p class="mt-3 text-center sm:text-start text-xs text-base-content/50">Official pages, profiles, career resources, and other platform-linked destinations.</p>
+
+            <p class="mt-3 text-center sm:text-start text-xs text-base-content/50">Pages and destinations associated with job platforms.</p>
         </div>
 
-        {{-- Page Rows --}}
+        {{-- ======================= DESKTOP TABLE ======================= --}}
         <div class="divide-y divide-base-300">
             @forelse($pages as $page)
                 <div class="group relative p-4 transition hover:bg-base-200/30 sm:p-5 border border-gray-300 sm:border-none shadow-sm sm:shadow-none my-2 sm:my-0">
@@ -337,13 +415,15 @@
                         <div class="flex min-w-0 items-center gap-4 xl:w-[360px]">
                             {{-- Page Icon --}}
                             <div class="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-base-300 bg-base-200 shadow-sm">
-                                @if($page->platform?->logo)
-                                    <img src="{{ Storage::url($page->platform->logo) }}" alt="{{ $page->platform->name }}" class="size-full object-contain p-2">
+                                @if($page->logo)
+                                    <img src="{{ Storage::url($page->logo) }}" alt="{{ $page->name }}" class="size-full object-contain">
+                                @elseif($page->platform?->logo)
+                                    <img src="{{ Storage::url($page->platform->logo) }}" alt="{{ $page->platform->name }}" class="size-full object-contain">
                                 @elseif($page->platform?->icon)
                                     <i class="{{ $page->platform->icon }} text-5xl"
-                                       @if($page->platform->color)
-                                           style="color: {{ $page->platform->color }}"
-                                       @endif>
+                                    @if($page->platform->color)
+                                        style="color: {{ $page->platform->color }}"
+                                    @endif>
                                     </i>
                                 @else
                                     <i class="fa-solid fa-file-lines text-xl text-primary"></i>
@@ -372,9 +452,9 @@
                                 @if($page->short_desc)
                                     <div class="mt-1.5 line-clamp-1 text-xs text-base-content/50"> {{ $page->short_desc }} </div>
                                 @elseif($page->platform)
-                                <div class="mt-0.5 flex items-center gap-1.5 truncate text-xs text-base-content/45">
-                                    <i class="fa-solid fa-layer-group text-[9px]"></i> {{ $page->platform?->name ?? 'Unassigned platform' }}
-                                </div>
+                                    <div class="mt-0.5 flex items-center gap-1.5 truncate text-xs text-base-content/45">
+                                        <i class="fa-solid fa-layer-group text-[9px]"></i> {{ $page->platform?->name ?? 'Unassigned platform' }}
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -433,6 +513,22 @@
                                         <i class="fa-solid fa-circle-exclamation"></i> Inactive
                                     </span>
                                 @endif
+
+                                <span class="badge badge-sm badge-outline gap-1.5">
+                                    <i class="fa-solid fa-lock"></i>
+                                    {{ $page->access_type }}
+                                </span>
+
+                                <span>
+                                    @if($page->is_bangladesh_focused)
+                                        <span class="badge badge-success badge-sm gap-1">
+                                            <i class="fa-solid fa-flag"></i>
+                                            Bangladesh
+                                        </span>
+                                    @else
+                                        <span class="badge badge-sm badge-outline text-base-content/40">International</span>
+                                    @endif
+                                </span>
                             </div>
                         </div>
 
@@ -475,7 +571,6 @@
                                     <li>
                                         @can('delete',$page)
                                             <button
-                                                {{-- type="button" --}}
                                                 class="text-error flex items-center gap-2 hover:bg-error/10"
                                                 title="Move page to trash"
                                                 data-admin-action
@@ -483,7 +578,7 @@
                                                 data-action-method="DELETE"
                                                 data-action-type="danger"
                                                 data-action-title="Move Platform Page to Trash"
-                                                data-action-description="Move <strong>“{{ $page->name }}”</strong> to trash. You can restore it later from the Trash page."
+                                                data-action-description="Move <strong>“{{ $page->name }}”</strong> to trash. You can restore it later from the Trash Pages."
                                                 data-action-icon="fa-solid fa-trash-can"
                                                 data-action-confirm-icon="fa-solid fa-trash-can"
                                                 data-action-confirm-text="Move to Trash"
@@ -507,13 +602,14 @@
                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                             </a>
 
-                            <a href="{{ route('admin.platforms.show',$page->platform) }}" class="btn btn-sm btn-outline">
-                                <i class="fa-solid fa-layer-group"></i> platform
-                            </a>
+                            @if($page->platform)
+                                <a href="{{ route('admin.platforms.show',$page->platform) }}" class="btn btn-sm btn-outline">
+                                    <i class="fa-solid fa-layer-group"></i> Platform
+                                </a>
+                            @endif
 
                             @can('delete',$page)
                                 <button
-                                    {{-- type="button" --}}
                                     class="text-error flex items-center hover:bg-error/10 btn btn-sm btn-outline border-error"
                                     title="Move page to trash"
                                     data-admin-action
@@ -521,7 +617,7 @@
                                     data-action-method="DELETE"
                                     data-action-type="danger"
                                     data-action-title="Move Platform Page to Trash"
-                                    data-action-description="Move <strong>“{{ $page->name }}”</strong> to trash. You can restore it later from the Trash page."
+                                    data-action-description="Move <strong>“{{ $page->name }}”</strong> to trash. You can restore it later from the Trash Pages."
                                     data-action-icon="fa-solid fa-trash-can"
                                     data-action-confirm-icon="fa-solid fa-trash-can"
                                     data-action-confirm-text="Move to Trash"
@@ -540,7 +636,7 @@
                         <i class="fa-solid fa-file-circle-xmark text-2xl"></i>
                     </div>
 
-                    @if($search || $platformSlug || $pageType || $status)
+                    @if($search || $platformSlug || $pageType || $accessType || $status !== null || $bangladeshFocus)
                         <h3 class="mt-5 text-lg font-black">No matching pages</h3>
                         <p class="mx-auto mt-1 max-w-md text-sm text-base-content/50">No platform pages match your current search and filter combination. Try changing your filters or clearing them.</p>
                         <a href="{{ route('admin.platform-pages.index') }}" class="btn btn-outline mt-5 gap-2">
@@ -567,9 +663,10 @@
     @if($pages->isNotEmpty())
         <div class="flex flex-col gap-3 py-4 sm:py-2 text-xs text-base-content/50 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-success"></i>
+                <i class="fa-solid fa-file-lines text-primary"></i>
+
                 <span>
-                    Platform pages represent <strong class="text-base-content/70">official platform destinations</strong> maintained in CareerVault.
+                    Platform pages represent <strong class="text-base-content/70">destinations and resources</strong> maintained in CareerVault.
                 </span>
             </div>
 

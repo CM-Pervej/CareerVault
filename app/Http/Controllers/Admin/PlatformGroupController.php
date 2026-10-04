@@ -23,21 +23,27 @@ class PlatformGroupController extends Controller
     {
         $this->authorize('viewAny', PlatformGroup::class);
 
-        $search = $request->input('search');
-        $platformSlug = $request->input('platform');
-        $groupType = $request->input('group_type');
-        $accessType = $request->input('access_type');
+        $search = trim($request->input('search', ''));
+        $platformSlug = trim($request->input('platform', ''));
+        $groupType = trim($request->input('group_type', ''));
+        $accessType = trim($request->input('access_type', ''));
         $status = $request->input('status');
-        $bangladeshFocus = $request->input('bangladesh_focus', '');
+        $bangladeshFocus = trim($request->input('bangladesh_focus', ''));
 
-        $platform = $platformSlug
-            ? Platform::where('slug', $platformSlug)->first()
-            : null;
+        // Selected Platform
+        $platform = null;
+
+        if ($platformSlug !== '') {
+            $platform = Platform::query()
+                ->where('slug', $platformSlug)
+                ->firstOrFail();
+        }
 
         $platformId = $platform?->id;
 
+        // Groups
         $groups = PlatformGroup::query()
-            ->with('platform:id,name,slug')
+            ->with('platform:id,name,slug,logo,icon,color')
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -63,6 +69,7 @@ class PlatformGroupController extends Controller
                     $bangladeshFocus === 'focused'
                 );
             })
+            ->orderBy('platform_id')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
@@ -90,20 +97,13 @@ class PlatformGroupController extends Controller
             ->orderBy('access_type')
             ->pluck('access_type');
 
-        $total = PlatformGroup::query()
-            ->when($platformId, fn ($query) =>
-                $query->where('platform_id', $platformId)
-            )
-            ->count();
+        // Summary Statistics
+        $groupStatsQuery = PlatformGroup::query()
+            ->when($platformId, fn ($query) => $query->where('platform_id', $platformId));
 
-        $active = PlatformGroup::query()
-            ->when($platformId, fn ($query) =>
-                $query->where('platform_id', $platformId)
-            )
-            ->where('is_active', true)
-            ->count();
-
-        $inactive = $total - $active;
+        $totalGroups = (clone $groupStatsQuery)->count();
+        $activeGroups = (clone $groupStatsQuery)->where('is_active', true)->count();
+        $inactiveGroups = (clone $groupStatsQuery)->where('is_active', false)->count();
 
         $trashedGroupsCount = PlatformGroup::onlyTrashed()
             ->when($platformId, fn ($query) =>
@@ -124,9 +124,9 @@ class PlatformGroupController extends Controller
             'accessType',
             'status',
             'bangladeshFocus',
-            'total',
-            'active',
-            'inactive',
+            'totalGroups',
+            'activeGroups',
+            'inactiveGroups',
             'trashedGroupsCount',
         ));
     }
@@ -152,7 +152,8 @@ class PlatformGroupController extends Controller
         ));
     }
 
-    public function store(PlatformGroupRequest $request): RedirectResponse {
+    public function store(PlatformGroupRequest $request): RedirectResponse 
+    {
         $this->authorize('create', PlatformGroup::class);
 
         $validated = $request->validated();
@@ -179,12 +180,7 @@ class PlatformGroupController extends Controller
             ]);
         });
 
-        return redirect()
-            ->route('admin.platform-groups.show', $group)
-            ->with(
-                'success',
-                "Group {$group->name} created successfully."
-            );
+        return redirect()->route('admin.platform-groups.show', $group)->with('success', "Group {$group->name} created successfully.");
     }
 
     public function show(string $platformGroup): View
@@ -217,7 +213,8 @@ class PlatformGroupController extends Controller
         ));
     }
 
-    public function update(PlatformGroupRequest $request, PlatformGroup $platformGroup): RedirectResponse {
+    public function update(PlatformGroupRequest $request, PlatformGroup $platformGroup): RedirectResponse 
+    {
         $this->authorize('update', $platformGroup);
 
         $validated = $request->validated();
@@ -266,15 +263,11 @@ class PlatformGroupController extends Controller
             $images
         );
 
-        return redirect()
-            ->route('admin.platform-groups.show', $platformGroup)
-            ->with(
-                'success',
-                "Group {$platformGroup->name} updated successfully."
-            );
+        return redirect()->route('admin.platform-groups.show', $platformGroup)->with('success', "Group {$platformGroup->name} updated successfully.");
     }
 
-    public function destroy(PlatformGroup $platformGroup): RedirectResponse {
+    public function destroy(PlatformGroup $platformGroup): RedirectResponse 
+    {
         $this->authorize('delete', $platformGroup);
 
         $name = $platformGroup->name;
@@ -286,9 +279,7 @@ class PlatformGroupController extends Controller
 
         $platformGroup->delete();
 
-        return redirect()
-            ->route('admin.platform-groups.index', ['platform' => $platformSlug,])
-            ->with('success', "Group {$name} moved to trash.");
+        return redirect()->route('admin.platform-groups.index', ['platform' => $platformSlug,])->with('success', "Group {$name} moved to trash.");
     }
 
     public function trash(Request $request): View
@@ -316,7 +307,11 @@ class PlatformGroupController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.platform-groups.trash', compact('groups', 'platforms', 'groupTypes'));
+        return view('admin.platform-groups.trash', compact(
+            'groups', 
+            'platforms', 
+            'groupTypes'
+        ));
     }
 
     public function restore( string $platformGroup): RedirectResponse 
@@ -334,9 +329,7 @@ class PlatformGroupController extends Controller
 
         $group->restore();
 
-        return redirect()
-            ->route('admin.platform-groups.trash')
-            ->with('success', "Group {$group->name} restored successfully.");
+        return redirect()->route('admin.platform-groups.trash')->with('success', "Group {$group->name} restored successfully.");
     }
 
     public function forceDelete(string $platformGroup): RedirectResponse 
@@ -349,9 +342,7 @@ class PlatformGroupController extends Controller
 
         $group->forceDelete();
 
-        return redirect()
-            ->route('admin.platform-groups.trash')
-            ->with('success', "Platform Group permanently deleted.");
+        return redirect()->route('admin.platform-groups.trash')->with('success', "Platform Group permanently deleted.");
     }
     
     /** Store uploaded images for a new group. */
@@ -400,7 +391,8 @@ class PlatformGroupController extends Controller
     }
 
     /** Delete replaced images. The old image is deleted only when a new image has actually replaced it. */
-    private function deleteImages(array $oldImages, array $newImages): void {
+    private function deleteImages(array $oldImages, array $newImages): void 
+    {
         if (
             !empty($oldImages['logo']) &&
             !empty($newImages['logo']) &&
@@ -422,7 +414,8 @@ class PlatformGroupController extends Controller
         }
     }
 
-    private function generateUniqueSlug(string $name, int $platformId, ?int $ignoreId = null): string {
+    private function generateUniqueSlug(string $name, int $platformId, ?int $ignoreId = null): string 
+    {
         $slug = Str::slug($name);
 
         if ($slug === '') {

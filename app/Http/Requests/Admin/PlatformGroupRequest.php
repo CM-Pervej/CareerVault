@@ -34,10 +34,12 @@ class PlatformGroupRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('platform_groups', 'slug')
-                    ->where(fn ($query) => $query->where(
-                        'platform_id',
-                        $this->input('platform_id')
-                    ))
+                    ->where(fn ($query) => 
+                        $query->where(
+                            'platform_id',
+                            $this->input('platform_id')
+                        )
+                    )
                     ->ignore($platformGroup?->id),
             ],
 

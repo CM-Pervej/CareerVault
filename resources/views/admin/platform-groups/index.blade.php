@@ -60,7 +60,7 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-users"></i> Groups
                             </div>
-                            <div class="mt-2 text-3xl font-black"> {{ number_format($total) }} </div>
+                            <div class="mt-2 text-3xl font-black"> {{ number_format($totalGroups) }} </div>
                         </div>
                         <div class="flex size-10 items-center justify-center rounded-lg bg-info/10 text-info">
                             <i class="fa-solid fa-users"></i>
@@ -80,7 +80,7 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-circle-check"></i> Active
                             </div>
-                            <div class="mt-2 text-3xl font-black"> {{ number_format($active) }} </div>
+                            <div class="mt-2 text-3xl font-black"> {{ number_format($activeGroups) }} </div>
                         </div>
                         <div class="flex size-10 items-center justify-center rounded-lg bg-success/10 text-success">
                             <i class="fa-solid fa-toggle-on"></i>
@@ -100,7 +100,7 @@
                             <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
                                 <i class="fa-solid fa-circle-exclamation"></i> Inactive
                             </div>
-                            <div class="mt-2 text-3xl font-black"> {{ number_format($inactive) }} </div>
+                            <div class="mt-2 text-3xl font-black"> {{ number_format($inactiveGroups) }} </div>
                         </div>
                         <div class="flex size-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
                             <i class="fa-solid fa-toggle-off"></i>

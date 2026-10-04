@@ -17,15 +17,24 @@ return new class extends Migration
             $table->string('page_type')->nullable();
 
             $table->string('url', 2048);
-            $table->string('short_desc')->nullable();
+            $table->text('short_desc')->nullable();
             $table->text('description')->nullable();
+
+            $table->string('access_type')->default('public');
+            $table->boolean('is_bangladesh_focused')->default(false);
+
+            $table->string('logo')->nullable();
+            $table->string('cover_image')->nullable();
 
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
 
             $table->timestamp('last_verified_at')->nullable();
-
             $table->timestamps();
+
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+
             $table->softDeletes();
             $table->foreignId('deleted_by')->nullable()->constrained('users')->nullOnDelete();
 
@@ -34,6 +43,8 @@ return new class extends Migration
             $table->index('platform_id');
             $table->index('name');
             $table->index('page_type');
+            $table->index('access_type');
+            $table->index('is_bangladesh_focused');
             $table->index('is_active');
             $table->index('sort_order');
         });

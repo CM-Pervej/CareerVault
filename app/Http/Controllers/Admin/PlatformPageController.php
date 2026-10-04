@@ -10,6 +10,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -17,167 +19,259 @@ class PlatformPageController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request): View {
+    public function index(Request $request): View
+    {
         $this->authorize('viewAny', PlatformPage::class);
 
         $search = trim($request->input('search', ''));
         $platformSlug = trim($request->input('platform', ''));
         $pageType = trim($request->input('page_type', ''));
+        $accessType = trim($request->input('access_type', ''));
         $status = $request->input('status');
+        $bangladeshFocus = trim($request->input('bangladesh_focus', ''));
 
         // Selected Platform
         $platform = null;
 
         if ($platformSlug !== '') {
-            $platform = Platform::query()->where('slug', $platformSlug)->firstOrFail();
+            $platform = Platform::query()
+                ->where('slug', $platformSlug)
+                ->firstOrFail();
         }
 
         $platformId = $platform?->id;
 
         // Pages
         $pages = PlatformPage::query()
-            ->with(['platform:id,name,slug,logo,icon,color',])
-            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search) {
+            ->with('platform:id,name,slug,logo,icon,color')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('short_desc', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhere('page_type', 'like', "%{$search}%");
-                })
-            )
-            ->when(
-                $platformId, 
-                fn ($query) => $query->where('platform_id', $platformId)
-            )
-            ->when(
-                $pageType !== '', 
-                fn ($query) => $query->where('page_type', $pageType)
-            )
-            ->when(
-                $status === 'active', 
-                fn ($query) => $query->where('is_active', true)
-            )
-            ->when(
-                $status === 'inactive',
-                fn ($query) => $query->where('is_active', false)
-            )
+                        ->orWhere('page_type', 'like', "%{$search}%")
+                        ->orWhere('short_desc', 'like', "%{$search}%");
+                });
+            })
+            ->when($platformId, function ($query) use ($platformId) {
+                $query->where('platform_id', $platformId);
+            })
+            ->when($pageType, function ($query) use ($pageType) {
+                $query->where('page_type', $pageType);
+            })
+            ->when($accessType, function ($query) use ($accessType) {
+                $query->where('access_type', $accessType);
+            })
+            ->when($status !== null, function ($query) use ($status) {
+                $query->where('is_active', $status === 'active');
+            })
+            ->when($bangladeshFocus, function ($query) use ($bangladeshFocus) {
+                $query->where(
+                    'is_bangladesh_focused',
+                    $bangladeshFocus === 'focused'
+                );
+            })
             ->orderBy('platform_id')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
-        // Platform Filter Options
         $platforms = Platform::query()
+            ->select('id', 'name', 'slug')
             ->orderBy('name')
-            ->get(['id', 'name', 'slug',]);
+            ->get();
 
-        // Page Type Filter Options
         $pageTypes = PlatformPage::query()
             ->whereNotNull('page_type')
             ->where('page_type', '!=', '')
+            ->when($platformId, function ($query) use ($platformId) {
+                $query->where('platform_id', $platformId);
+            })
             ->distinct()
             ->orderBy('page_type')
             ->pluck('page_type');
 
+        $accessTypes = PlatformPage::query()
+            ->whereNotNull('access_type')
+            ->where('access_type', '!=', '')
+            ->distinct()
+            ->orderBy('access_type')
+            ->pluck('access_type');
+
         // Summary Statistics
         $pageStatsQuery = PlatformPage::query()
-            ->when(
-                $platformId,
-                fn ($query) => $query->where('platform_id', $platformId)
-            );
+            ->when($platformId, fn ($query) => $query->where('platform_id', $platformId));
 
         $totalPages = (clone $pageStatsQuery)->count();
         $activePages = (clone $pageStatsQuery)->where('is_active', true)->count();
         $inactivePages = (clone $pageStatsQuery)->where('is_active', false)->count();
-        $trashedPagesCount = PlatformPage::onlyTrashed()->count();
 
-        return view('admin.platform-pages.index', compact('pages', 'platforms', 'pageTypes', 'platform', 'platformSlug', 'platformId', 'totalPages', 'activePages', 'inactivePages', 'search', 'pageType', 'status', 'trashedPagesCount'));
+        $trashedPagesCount = PlatformPage::onlyTrashed()
+            ->when($platformId, fn ($query) => 
+                $query->where('platform_id', $platformId)
+            )
+            ->count();
+
+        return view('admin.platform-pages.index', compact(
+            'pages',
+            'platform',
+            'platformSlug',
+            'platformId',
+            'platforms',
+            'pageTypes',
+            'accessTypes',
+            'search',
+            'pageType',
+            'accessType',
+            'status',
+            'bangladeshFocus',
+            'totalPages',
+            'activePages',
+            'inactivePages',
+            'trashedPagesCount',
+        ));
     }
 
-    public function create(Request $request): View {
+    public function create(Request $request): View
+    {
         $this->authorize('create', PlatformPage::class);
 
-        $selectedPlatform = null;
+        $platformSlug = $request->input('platform');
 
-        if ($request->filled('platform')) {
-            $selectedPlatform = Platform::query()
-                ->where('slug', $request->input('platform'))
-                ->firstOrFail();
-        }
+        $platform = $platformSlug
+            ? Platform::where('slug', $platformSlug)->firstOrFail()
+            : null;
 
         $platforms = Platform::query()
-            ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'logo', 'icon', 'color',]);
+            ->get();
 
-        return view('admin.platform-pages.create', compact('platforms', 'selectedPlatform'));
+        return view('admin.platform-pages.create', compact(
+            'platform',
+            'platforms',
+            'platformSlug',
+        ));
     }
 
-    public function store(PlatformPageRequest $request): RedirectResponse {
+    public function store(PlatformPageRequest $request): RedirectResponse
+    {
         $this->authorize('create', PlatformPage::class);
 
         $validated = $request->validated();
 
-        $validated['slug'] = $this->generateUniqueSlug(
-            $validated['name'],
-            $validated['platform_id']
-        );
+        $platform = Platform::findOrFail($validated['platform_id']);
 
-        $platformPage = PlatformPage::create($validated);
+        $images = $this->storeImages($request);
 
-        return redirect()->route('admin.platform-pages.show', $platformPage)->with('success', 'Platform page created successfully.');
+        $page = DB::transaction(function () use (
+            $validated,
+            $platform,
+            $images
+        ) {
+            return PlatformPage::create([
+                ...$validated,
+                'logo' => $images['logo'],
+                'cover_image' => $images['cover_image'],
+                'slug' => $this->generateUniqueSlug(
+                    $validated['name'],
+                    $platform->id
+                ),
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+        });
+
+        return redirect()->route('admin.platform-pages.show', $page)->with('success', "Page {$page->name} created successfully.");
     }
 
-    public function show(string $platformPage): View {
+    public function show(string $platformPage): View
+    {
         $platformPage = PlatformPage::withTrashed()
-            ->where('slug',$platformPage)
+            ->where('slug', $platformPage)
             ->firstOrFail();
 
-        $this->authorize('view',$platformPage);
+        $this->authorize('view', $platformPage);
 
         $platformPage->load(['platform:id,name,slug,official_name,logo,cover_image,icon,color,is_bangladesh_focused',]);
 
         return view('admin.platform-pages.show', compact('platformPage'));
     }
 
-    public function edit(PlatformPage $platformPage): View {
+    public function edit(PlatformPage $platformPage): View
+    {
         $this->authorize('update', $platformPage);
 
-        $platformPage->load('platform');
-
         $platforms = Platform::query()
-            ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'logo', 'icon', 'color',]);
+            ->get();
 
-        return view('admin.platform-pages.edit', compact('platformPage', 'platforms'));
+        $platform = $platformPage->platform;
+
+        return view('admin.platform-pages.edit', compact(
+            'platform',
+            'platformPage',
+            'platforms'
+        ));
     }
 
-    public function update(PlatformPageRequest $request, PlatformPage $platformPage): RedirectResponse {
+    public function update(PlatformPageRequest $request, PlatformPage $platformPage): RedirectResponse 
+    {
         $this->authorize('update', $platformPage);
 
         $validated = $request->validated();
-        $platformChanged = (int) $validated['platform_id'] !== (int) $platformPage->platform_id;
-        $nameChanged = $validated['name'] !== $platformPage->name;
 
-        if ($platformChanged || $nameChanged) {
-            $validated['slug'] = $this->generateUniqueSlug(
-                $validated['name'],
-                $validated['platform_id'],
-                $platformPage->id
-            );
-        } else {
-            $validated['slug'] = $platformPage->slug;
-        }
+        $platform = Platform::findOrFail(
+            $validated['platform_id']
+        );
 
-        $platformPage->update($validated);
+        $oldImages = [
+            'logo' => $platformPage->logo,
+            'cover_image' => $platformPage->cover_image,
+        ];
 
-        return redirect()->route('admin.platform-pages.show', $platformPage)->with('success', 'Platform page updated successfully.');
+        $images = $this->updateImages(
+            $request,
+            $platformPage
+        );
+
+        $validated = array_merge(
+            $validated,
+            $images
+        );
+
+        DB::transaction(function () use (
+            $platformPage,
+            $validated,
+            $platform
+        ) {
+            $platformPage->update([
+                ...$validated,
+                'slug' => $this->generateUniqueSlug(
+                    $validated['name'],
+                    $platform->id,
+                    $platformPage->id
+                ),
+                'updated_by' => Auth::id(),
+            ]);
+        });
+
+        /*
+         * Delete previous images only after the database
+         * update has completed successfully.
+         */
+        $this->deleteImages(
+            $oldImages,
+            $images
+        );
+
+        return redirect()->route('admin.platform-pages.show', $platformPage)->with('success', "Page {$platformPage->name} updated successfully.");
     }
 
     public function destroy(PlatformPage $platformPage): RedirectResponse
     {
-        $this->authorize('delete',$platformPage);
+        $this->authorize('delete', $platformPage);
+
+        $name = $platformPage->name;
+        $platformSlug = $platformPage->platform?->slug;
 
         $platformPage->update([
             'deleted_by' => Auth::id(),
@@ -185,12 +279,10 @@ class PlatformPageController extends Controller
 
         $platformPage->delete();
 
-        return redirect()
-            ->route('admin.platform-pages.index')
-            ->with('success','Platform page moved to trash.');
+        return redirect()->route('admin.platform-pages.index', ['platform' => $platformSlug,])->with('success', "Page {$name} moved to trash.");
     }
 
-    public function trash(): View
+    public function trash(Request $request): View
     {
         $this->authorize('viewAny', PlatformPage::class);
 
@@ -210,52 +302,128 @@ class PlatformPageController extends Controller
             ])
             ->when(request('platform'), fn ($query) => $query->where('platform_id', request('platform')))
             ->when(request('type'), fn ($query) => $query->where('page_type', request('type')))
+            ->when(request('access_type'), fn ($query) => $query->where('access_type', request('access_type')))
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.platform-pages.trash', compact('pages', 'platforms', 'pageTypes'));
+        return view('admin.platform-pages.trash', compact(
+            'pages',
+            'platforms',
+            'pageTypes'
+        ));
     }
 
     public function restore(string $platformPage): RedirectResponse
     {
-        $platformPage=PlatformPage::onlyTrashed()
-            ->where('slug',$platformPage)
+        $page = PlatformPage::onlyTrashed()
+            ->where('slug', $platformPage)
             ->firstOrFail();
 
-        $this->authorize('restore',$platformPage);
+        $this->authorize('restore', $page);
 
-        $platformPage->update([
+        $page->update([
             'deleted_by' => null,
+            'updated_by' => Auth::id(),
         ]);
 
-        $platformPage->restore();
+        $page->restore();
 
-        return redirect()
-            ->route('admin.platform-pages.trash')
-            ->with('success','Platform page restored successfully.');
+        return redirect()->route('admin.platform-pages.trash')->with('success', "Page {$page->name} restored successfully.");
     }
 
     public function forceDelete(string $platformPage): RedirectResponse
     {
-        $platformPage=PlatformPage::onlyTrashed()
-            ->where('slug',$platformPage)
+        $page = PlatformPage::onlyTrashed()
+            ->where('slug', $platformPage)
             ->firstOrFail();
 
-        $this->authorize('forceDelete', $platformPage);
+        $this->authorize('forceDelete', $page);
 
-        $platformPage->forceDelete();
+        $page->forceDelete();
 
-        return redirect()
-            ->route('admin.platform-pages.trash')
-            ->with('success','Platform page permanently deleted.');
+        return redirect()->route('admin.platform-pages.trash')->with('success', "Platform Page permanently deleted.");
     }
 
-    private function generateUniqueSlug(string $name, int $platformId, ?int $ignoreId = null): string {
-        $baseSlug = Str::slug($name) ?: 'page';
+    /** Store uploaded images for a new page. */
+    private function storeImages(Request $request): array
+    {
+        return [
+            'logo' => $request->hasFile('logo')
+                ? $request->file('logo')->store(
+                    'platform-pages/logos',
+                    'public'
+                )
+                : null,
 
-        $slug = $baseSlug;
-        $counter = 2;
+            'cover_image' => $request->hasFile('cover_image')
+                ? $request->file('cover_image')->store(
+                    'platform-pages/covers',
+                    'public'
+                )
+                : null,
+        ];
+    }
+
+    /** Store newly uploaded images when updating a page. Existing images are kept when no replacement file is uploaded. */
+    private function updateImages(Request $request, PlatformPage $platformPage): array {
+        $images = [];
+
+        if ($request->hasFile('logo')) {
+            $images['logo'] = $request->file('logo')->store(
+                'platform-pages/logos',
+                'public'
+            );
+        } else {
+            $images['logo'] = $platformPage->logo;
+        }
+
+        if ($request->hasFile('cover_image')) {
+            $images['cover_image'] = $request->file('cover_image')->store(
+                'platform-pages/covers',
+                'public'
+            );
+        } else {
+            $images['cover_image'] = $platformPage->cover_image;
+        }
+
+        return $images;
+    }
+
+    /** Delete replaced images. The old image is deleted only when a new image has actually replaced it. */
+    private function deleteImages(array $oldImages, array $newImages): void 
+    {
+        if (
+            !empty($oldImages['logo']) &&
+            !empty($newImages['logo']) &&
+            $oldImages['logo'] !== $newImages['logo']
+        ) {
+            Storage::disk('public')->delete(
+                $oldImages['logo']
+            );
+        }
+
+        if (
+            !empty($oldImages['cover_image']) &&
+            !empty($newImages['cover_image']) &&
+            $oldImages['cover_image'] !== $newImages['cover_image']
+        ) {
+            Storage::disk('public')->delete(
+                $oldImages['cover_image']
+            );
+        }
+    }
+
+    private function generateUniqueSlug(string $name, int $platformId, ?int $ignoreId = null): string 
+    {
+        $slug = Str::slug($name);
+
+        if ($slug === '') {
+            $slug = 'page';
+        }
+
+        $original = $slug;
+        $counter = 1;
 
         while (
             PlatformPage::withTrashed()
@@ -263,12 +431,12 @@ class PlatformPageController extends Controller
                 ->where('slug', $slug)
                 ->when(
                     $ignoreId,
-                    fn ($query) => $query->where('id', '!=', $ignoreId)
+                    fn ($query) =>
+                        $query->where('id', '!=', $ignoreId)
                 )
                 ->exists()
         ) {
-            $slug = "{$baseSlug}-{$counter}";
-            $counter++;
+            $slug = $original . '-' . $counter++;
         }
 
         return $slug;

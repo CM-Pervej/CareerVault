@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('group_type')->nullable();
 
             $table->string('url', 2048);
-            $table->string('short_desc')->nullable();
+            $table->text('short_desc')->nullable();
             $table->text('description')->nullable();
 
             $table->string('access_type')->default('public');

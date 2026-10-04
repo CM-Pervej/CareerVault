@@ -13,7 +13,8 @@ class PlatformGroup extends Model
     protected $fillable = [
         'platform_id', 'name', 'slug', 'group_type', 'url',
         'short_desc', 'description', 'access_type', 'is_bangladesh_focused', 'logo', 'cover_image',
-        'is_active', 'sort_order', 'last_verified_at', 'created_by', 'updated_by', 'deleted_by',
+        'is_active', 'sort_order', 'last_verified_at', 
+        'created_by', 'updated_by', 'deleted_by',
     ];
 
     protected function casts(): array

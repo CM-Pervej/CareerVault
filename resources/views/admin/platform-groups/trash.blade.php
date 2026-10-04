@@ -4,7 +4,6 @@
 @section('page_title', 'Groups / Trash')
 
 @section('content')
-
 <div class="space-y-3 p-4 sm:p-6">
     {{-- =========================== Header =========================== --}}
     <header class="relative overflow-hidden sm:mb-6">

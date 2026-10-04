@@ -36,7 +36,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.platform-pages.store') }}">
+    <form method="POST" action="{{ route('admin.platform-pages.store') }}" enctype="multipart/form-data">
         @csrf
 
         @include('admin.platform-pages._form')

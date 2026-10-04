@@ -66,6 +66,34 @@ class PlatformPageRequest extends FormRequest
                 'string',
             ],
 
+                        'access_type' => [
+                'required',
+                Rule::in([
+                    'public',
+                    'members_only',
+                    'private',
+                ]),
+            ],
+
+            'is_bangladesh_focused' => [
+                'required',
+                'boolean',
+            ],
+
+            'logo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048', // 2 MB
+            ],
+
+            'cover_image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120', // 5 MB
+            ],
+
             'is_active' => [
                 'nullable',
                 'boolean',
@@ -88,8 +116,33 @@ class PlatformPageRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'is_bangladesh_focused' => $this->boolean(
+                'is_bangladesh_focused'
+            ),
+
             'is_active' => $this->boolean('is_active'),
-            'sort_order' => $this->input('sort_order', 0),
+
+            'sort_order' => (int) $this->input(
+                'sort_order',
+                0
+            ),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'logo.uploaded' => $this->uploadErrorMessage('logo'),
+            'cover_image.uploaded' => $this->uploadErrorMessage('cover_image'),
+        ];
+    }
+
+    private function uploadErrorMessage(string $field): string
+    {
+        $file = $this->file($field);
+
+        return $file
+            ? $file->getErrorMessage()
+            : 'The file could not be uploaded.';
     }
 }
