@@ -113,7 +113,7 @@
                                             </svg>
 
                                             <div class="overflow-hidden shrink-0 absolute inset-2 rounded-full text-primary-content flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold ring-4 ring-base-100">
-                                                <img src="https://flagcdn.com/w80/{{ strtolower($item->iso_code) }}.png"
+                                                <img src="https://flagcdn.com/w80/{{ strtolower($item->iso2) }}.png"
                                                 alt="{{ $item->name }} flag" class="w-full h-full object-cover">
                                             </div>
 

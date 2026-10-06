@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', $platformGroup->name)
+@section('page_title', 'Groups / ' . $platformGroup->name)
 
 @push('styles') 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"> 
@@ -62,7 +63,7 @@
                         </a>
                     @endif
 
-                    <a href="{{ route('admin.platform-groups.index', ['platform' => $platform->slug]) }}" class="btn btn-sm border-0 bg-white/15 text-white shadow-none backdrop-blur-md hover:bg-white/25">
+                    <a href="{{ route('admin.platform-groups.index') }}" class="btn btn-sm border-0 bg-white/15 text-white shadow-none backdrop-blur-md hover:bg-white/25">
                         <i class="fa-solid fa-arrow-left text-xs"></i>
                         <span class="hidden sm:inline">Back</span>
                     </a>
@@ -159,11 +160,28 @@
     </section>
 
     {{-- ===================== Main Content ====================== --}}
-    <div class="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] sm:px-6">
+    <div x-data="{expanded: false, canExpand: false,
+            checkHeight() {
+                this.$nextTick(() => {
+                    const content = this.$refs.descriptionContent;
+
+                    if (!content) {
+                        this.canExpand = false;
+                        return;
+                    }
+
+                    this.canExpand = content.scrollHeight > content.clientHeight;
+                });
+            }
+        }"
+        x-init="checkHeight()"
+        @resize.window="checkHeight()"
+        class="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] sm:px-6"
+    >
         {{-- ================= Main Column ======================= --}}
-        <div class="space-y-3">
+        <div class="order-1 space-y-3">
             {{-- Description --}}
-            <section class="border border-gray-300 bg-base-100 sm:rounded-sm">
+            <section class="bg-base-100 sm:rounded-sm sm:border sm:border-gray-300">
                 <div class="border-b border-base-300 px-5 py-2 sm:py-4">
                     <div class="flex items-center justify-center gap-2 sm:justify-start">
                         <i class="fa-solid fa-align-left text-primary"></i>
@@ -171,13 +189,26 @@
                     </div>
                 </div>
 
-                <div class="p-2 sm:p-5">
+                <div class="px-4 sm:px-5">
                     @if($platformGroup->description)
-                        <div class="whitespace-pre-line text-justify text-sm leading-7 text-base-content/75"> {{ $platformGroup->description }} </div>
-                    @elseif($platformGroup->short_desc)
-                        <div class="whitespace-pre-line text-justify text-sm leading-7 text-base-content/75">
-                            {{ $platformGroup->short_desc }}
+                        <div class="max-w-4xl">
+                            <div x-ref="descriptionContent" class="overflow-hidden text-sm text-base-content/75" :class="expanded ? '' : 'max-h-[200px]'">
+                                @foreach(preg_split("/\r\n\s*\r\n|\r\s*\r\s*|\n\s*\n/", trim($platformGroup->description)) as $paragraph)
+                                    @if(trim($paragraph))
+                                        <p class="whitespace-pre-line">
+                                            {{ trim($paragraph) }}
+                                        </p>
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            <button x-show="canExpand" x-cloak type="button" @click="expanded = !expanded" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80">
+                                <span x-text="expanded ? 'Read Less' : 'Read More'"></span>
+                                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="expanded ? 'rotate-180' : ''"></i>
+                            </button>
                         </div>
+                    @elseif($platformGroup->short_desc)
+                        <div class="max-w-4xl whitespace-pre-line text-sm leading-7 text-base-content/75"> {{ $platformGroup->short_desc }} </div>
                     @else
                         <div class="flex items-center gap-3 rounded-xl border border-dashed border-base-300 p-4">
                             <i class="fa-regular fa-file-lines text-base-content/30"></i>
@@ -187,10 +218,39 @@
                 </div>
             </section>
 
-            {{-- Group Details --}}
-            <section class="border border-gray-300 bg-base-100 sm:rounded-sm px-5">
-                <div class="pt-4">
-                    <div class="flex items-center gap-2">
+            {{-- ================= DESKTOP ONLY, Collapsed → Platform stays below Description ================== --}}
+            <template x-if="!expanded">
+                <section class="hidden border border-gray-300 bg-base-100 p-5 sm:rounded-sm lg:block">
+                    <div class="flex items-center gap-3">
+                        <div class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-base-200">
+                            @if($platform->logo)
+                                <img src="{{ Storage::url($platform->logo) }}" alt="{{ $platform->name }}" class="size-full object-contain p-2">
+                            @elseif($platform->icon)
+                                <i class="{{ $platform->icon }} text-4xl" style="color:{{ $platform->color ?: '#6366f1' }}"></i>
+                            @else
+                                <span class="text-4xl font-black" style="color:{{ $platform->color ?: '#4f46e5' }}"> {{ strtoupper(substr($platform->name, 0, 1)) }} </span>
+                            @endif
+                        </div>
+
+                        <div class="min-w-0">
+                            <p class="text-xs text-base-content/50">Belongs to</p>
+                            <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="font-bold hover:opacity-80" style="color:{{ $platform->color ?: '#6366f1' }}"> {{ $platform->name }} </a>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="btn btn-outline btn-sm mt-4 w-full gap-2">
+                        View Platform <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </section>
+            </template>
+        </div>
+
+        {{-- ======================= Sidebar ======================== --}}
+        <aside class="order-2 space-y-3 py-1 sm:p-0">
+            {{-- ================= Group Details ================= --}}
+            <section class="bg-base-100 sm:rounded-sm sm:border sm:border-gray-300">
+                <div class="border-b border-base-300 px-5 py-2 sm:py-4">
+                    <div class="flex items-center justify-center gap-2 sm:justify-start">
                         <i class="fa-solid fa-circle-info text-primary"></i>
                         <h2 class="font-bold">Group Details</h2>
                     </div>
@@ -199,99 +259,154 @@
                 @php
                     $metadata = [
                         [
-                            'label' => 'Type', 'value'  => $platformGroup->group_type ?: 'Not Specified',
+                            'label' => 'Type', 'value' => $platformGroup->group_type ?: 'Not Specified',
                         ], [
-                            'label' => 'Access', 'value'  => $accessLabel,
+                            'label' => 'Access', 'value' => $accessLabel,
                         ], [
-                            'label' => 'Bangladesh Focus', 'value'  => $platformGroup->is_bangladesh_focused ? 'Focused' : 'International', 'sp' => $platformGroup->is_bangladesh_focused ? 'badge badge-success badge-outline' : 'badge badge-primary badge-outline',
-                            'icon' => '<i class="fa-solid fa-flag"></i>'
+                            'label' => 'Bangladesh Focus', 'value' => $platformGroup->is_bangladesh_focused ? 'Focused' : 'International', 'sp' => $platformGroup->is_bangladesh_focused ? 'badge badge-success badge-outline' : 'badge badge-primary badge-outline', 'icon' => '<i class="fa-solid fa-flag"></i>',
                         ], [
-                            'label' => 'Sort Order', 'value'  => $platformGroup->sort_order,
+                            'label' => 'Sort Order', 'value' => $platformGroup->sort_order,
                         ], [
-                            'label' => 'Page ID', 'value'  => $platformGroup->id,
+                            'label' => 'Group ID', 'value' => $platformGroup->id,
                         ], [
-                            'label' => 'Group ID', 'value'  => $platformGroup->platform->id,
-                        ]
+                            'label' => 'Platform ID', 'value' => $platform->id,
+                        ],
                     ];
                 @endphp
 
                 <div class="divide-y divide-base-300">
                     {{-- Platform --}}
-                    <div class="info-row flex items-center justify-between gap-4 py-4">
+                    <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
                         <span class="text-sm text-base-content/60">Platform</span>
 
-                        <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" style="--platform-color: {{ $platform->color }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-right text-sm font-bold text-[var(--platform-color)] transition-colors hover:!bg-[var(--platform-color)] hover:!text-white">
+                        <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" style="--platform-color: {{ $platform->color ?: '#6366f1' }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-right text-sm font-bold text-[var(--platform-color)] transition-colors hover:!bg-[var(--platform-color)] hover:!text-white">
                             <i class="fa-solid fa-layer-group text-[11px]"></i> {{ $platform->name }}
                         </a>
                     </div>
 
-                    {{-- Platform --}}
-                    <div class="info-row flex items-center justify-between gap-4 py-4">
-                        <span class="text-sm text-base-content/60">Group</span>
-
-                        <a href="{{ $platformGroup->url }}" target="blank" style="--platform-color: {{ $platform->color }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-right text-sm font-bold text-[var(--platform-color)] transition-colors hover:!bg-[var(--platform-color)] hover:!text-white">
-                            <i class="fa-solid fa-users text-[11px]"></i> {{ $platformGroup->name }}
+                    {{-- Page URL --}}
+                    <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
+                        <span class="text-sm text-base-content/60">Page</span>
+                        <a href="{{ $platformGroup->url }}" target="_blank" rel="noopener noreferrer" style="--platform-color: {{ $platform->color ?: '#6366f1' }}" class="inline-flex max-w-[70%] items-center gap-1.5 rounded-lg border px-2 py-1 text-right text-sm font-bold text-[var(--platform-color)] transition-colors hover:!bg-[var(--platform-color)] hover:!text-white">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i> {{ $platformGroup->name }}
                         </a>
                     </div>
 
-                    {{-- Metadata --}}
-                    @foreach ($metadata as $item)
-                        <div class="info-row flex items-center justify-between gap-4 py-4">
+                    @foreach($metadata as $item)
+                        <div class="info-row flex items-center justify-between gap-4 px-5 py-4">
                             <span class="text-sm text-base-content/60"> {{ $item['label'] }} </span>
 
-                            <span class = "text-right text-sm font-semibold {{ $item['sp'] ?? '' }}"> 
-                                {!! $item['icon'] ?? '' !!} {{ $item['value'] }} 
-                             </span>
+                            <span class="text-right text-sm font-semibold {{ $item['sp'] ?? '' }}">
+                                {!! $item['icon'] ?? '' !!} {{ $item['value'] }}
+                            </span>
                         </div>
                     @endforeach
                 </div>
             </section>
-        </div>
 
-        {{-- ======================= Sidebar ======================== --}}
-        <aside class="space-y-3 p-1 sm:p-0">
-            {{-- History --}}
-            <section class="border border-gray-300 bg-base-100 sm:rounded-sm px-5">
-                <div class="pt-4">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-circle-info text-primary"></i>
-                        <h2 class="font-bold">History</h2>
+
+            {{-- =================== DESKTOP ONLY, Expanded → Platform stays immediately below Details ===================== --}}
+            <template x-if="expanded">
+                <section class="hidden border border-gray-300 bg-base-100 p-5 sm:rounded-sm lg:block">
+                    <div class="flex items-center gap-3">
+                        <div class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-base-200">
+                            @if($platform->logo)
+                                <img src="{{ Storage::url($platform->logo) }}" alt="{{ $platform->name }}" class="size-full object-contain p-2">
+                            @elseif($platform->icon)
+                                <i class="{{ $platform->icon }} text-4xl" style="color:{{ $platform->color ?: '#6366f1' }}"></i>
+                            @else
+                                <span class="text-4xl font-black" style="color:{{ $platform->color ?: '#4f46e5' }}"> {{ strtoupper(substr($platform->name, 0, 1)) }} </span>
+                            @endif
+                        </div>
+
+                        <div class="min-w-0">
+                            <p class="text-xs text-base-content/50">Belongs to</p>
+                            <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="font-bold hover:opacity-80" style="color:{{ $platform->color ?: '#6366f1' }}"> {{ $platform->name }} </a>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="btn btn-outline btn-sm mt-4 w-full gap-2">
+                        View Platform <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </section>
+            </template>
+
+            {{-- ==================== MOBILE ONLY, Platform ALWAYS comes immediately after Page Details ===================== --}}
+            <section class="border border-gray-300 bg-base-100 p-5 sm:rounded-sm lg:hidden">
+                <div class="flex items-center gap-3">
+                    <div class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-base-200">
+                        @if($platform->logo)
+                            <img src="{{ Storage::url($platform->logo) }}" alt="{{ $platform->name }}" class="size-full object-contain p-2">
+                        @elseif($platform->icon)
+                            <i class="{{ $platform->icon }} text-4xl" style="color:{{ $platform->color ?: '#6366f1' }}"></i>
+                        @else
+                            <span class="text-4xl font-black" style="color:{{ $platform->color ?: '#4f46e5' }}"> {{ strtoupper(substr($platform->name, 0, 1)) }} </span>
+                        @endif
+                    </div>
+
+                    <div class="min-w-0">
+                        <p class="text-xs text-base-content/50">Belongs to</p>
+                        <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="font-bold hover:opacity-80" style="color:{{ $platform->color ?: '#6366f1' }}"> {{ $platform->name }} </a>
                     </div>
                 </div>
 
-                @php
-                    $history = [
+                <a href="{{ route('admin.platforms.show', ['platform' => $platform->slug]) }}" class="btn btn-outline btn-sm mt-4 w-full gap-2">
+                    View Platform <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </section>
+        </aside>
+    </div>
+
+    {{-- History --}}
+    <section class="sm:px-6">
+        <div class="bg-base-100">
+            <div class="border-b border-base-300 sm:border-gray-300 px-5 sm:py-4">
+                <div class="flex items-center justify-center gap-2 sm:justify-start">
+                    <i class="fa-solid fa-circle-info text-primary"></i>
+                    <h2 class="font-bold">History</h2>
+                </div>
+            </div>
+    
+            @php
+                $history = [
+                    [
+                        'label' => 'Status', 'value' => $platformGroup->trashed() ? 'Trashed' : ($platformGroup->is_active ? 'Active' : 'Inactive'), 'cl' => $platformGroup->trashed() ? 'badge badge-warning badge-outline font-semibold' : ($platformGroup->is_active ? 'badge badge-success badge-outline font-semibold' : 'badge badge-ghost font-semibold'),
+                    ], [
+                        'label' => 'Created At', 'value' => $platformGroup->created_at->format('M d, Y - H:i A'), 'cl' => 'font-semibold text-blue-700',
+                    ], [
+                        'label' => 'Updated At', 'value' => $platformGroup->updated_at?->format('M d, Y - H:i A') ?? 'Unknown', 'cl' => 'text-green-700 font-semibold',
+                    ], 
+                    ...($platformGroup->trashed() ? [
                         [
-                            'label' => 'Status', 'value' => $platformGroup->trashed() ? 'Trashed' : ($platformGroup->is_active ? 'Active' : 'Inactive'), 'cl' => $platformGroup->trashed() ? 'badge badge-warning badge-outline font-semibold' : ($platformGroup->is_active ? 'badge badge-success badge-outline font-semibold' : 'badge badge-ghost font-semibold'),
-                        ], [
-                            'label' => 'Last Verified', 'value' => $platformGroup->last_verified_at ? $platformGroup->last_verified_at->format('M d, Y - H:i A') : 'Not verified', 'cl' => 'font-semibold',
-                        ], [
-                            'label' => 'Created At', 'value' => $platformGroup->created_at->format('M d, Y - H:i A'), 'cl' => 'font-semibold text-blue-700',
-                        ], [
-                            'label' => 'Created By', 'value' => $platformGroup->createdBy?->name ?? 'Unknown User', 'subvalue' => $platformGroup->createdBy ? str_replace('_', ' ', $platformGroup->createdBy->role) : null, 'cl' => 'font-black text-blue-700',
-                        ], [
-                            'label' => 'Updated At', 'value' => $platformGroup->updated_at?->format('M d, Y - H:i A') ?? 'Unknown', 'cl' => 'text-green-700 font-semibold',
-                        ], [
-                            'label' => 'Updated By', 'value' => $platformGroup->updatedBy?->name ?? 'Unknown User', 'cl' => 'text-green-700 font-black', 'subvalue' => $platformGroup->updatedBy ? str_replace('_', ' ', $platformGroup->updatedBy->role) : null,
+                            'label' => 'Deleted At', 'value' => $platformGroup->deleted_at?->format('M d, Y - H:i A') ?? 'Unknown', 'cl' => 'text-warning font-semibold',
+                        ], 
+                    ] : []),
+                ];
+                $historyRight = [
+                    [
+                        'label' => 'Last Verified', 'value' => $platformGroup->last_verified_at ? $platformGroup->last_verified_at->format('M d, Y - H:i A') : 'Not verified', 'cl' => 'font-semibold',
+                    ], [
+                        'label' => 'Created By', 'value' => $platformGroup->createdBy?->name ?? 'Unknown User', 'subvalue' => $platformGroup->createdBy ? str_replace('_', ' ', $platformGroup->createdBy->role) : null, 'cl' => 'font-black text-blue-700',
+                    ], [
+                        'label' => 'Updated By', 'value' => $platformGroup->updatedBy?->name ?? 'Unknown User', 'cl' => 'text-green-700 font-black', 'subvalue' => $platformGroup->updatedBy ? str_replace('_', ' ', $platformGroup->updatedBy->role) : null,
+                    ],
+                    ...($platformGroup->trashed() ? [
+                        [
+                            'label' => 'Deleted By', 'value' => $platformGroup->deletedBy?->name ?? 'Unknown User', 'cl' => 'text-warning font-black', 'subvalue' => $platformGroup->deletedBy ? str_replace('_', ' ', $platformGroup->deletedBy->role) : null,
                         ],
-                        ...($platformGroup->trashed() ? [
-                            [
-                                'label' => 'Deleted At', 'value' => $platformGroup->deleted_at?->format('M d, Y - H:i A') ?? 'Unknown', 'cl' => 'text-warning font-semibold',
-                            ], [
-                                'label' => 'Deleted By', 'value' => $platformGroup->deletedBy?->name ?? 'Unknown User', 'cl' => 'text-warning font-black', 'subvalue' => $platformGroup->deletedBy ? str_replace('_', ' ', $platformGroup->deletedBy->role) : null,
-                            ],
-                        ] : []),
-                    ];
-                @endphp
-
-                <div class="divide-y divide-base-300">
+                    ] : []),
+                ];
+            @endphp
+    
+            <div class="flex flex-col sm:flex-row justify-between sm:gap-5 py-2 sm:py-5">
+                <div class="flex-1 w-full sm:border sm:border-gray-300 p-5 grid grid-cols-1 gap-2">
                     @foreach($history as $item)
-                        <div class="info-row flex items-center justify-between gap-4 py-4">
+                        <div class="info-row flex items-center justify-between gap-4">
                             <span class="text-sm text-base-content/60"> {{ $item['label'] }} </span>
-
+        
                             <div class="min-w-0 text-right">
                                 <div class="text-sm {{ $item['cl'] ?? '' }}"> {{ $item['value'] }} </div>
-
+        
                                 @if(!empty($item['subvalue']))
                                     <div class="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-500"> {{ $item['subvalue'] }} </div>
                                 @endif
@@ -299,37 +414,31 @@
                         </div>
                     @endforeach
                 </div>
-            </section>
-
-            {{-- Platform --}}
-            <section class="border border-gray-300 bg-base-100 p-5 sm:rounded-sm">
-                <div class="flex items-center gap-3">
-                    <div class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-base-200">
-                        @if($platform->logo)
-                            <img src="{{ Storage::url($platform->logo) }}" alt="{{ $platform->name }}" class="size-full object-contain p-2">
-                        @elseif($platform->icon)
-                            <i class="{{ $platform->icon }} text-4xl" style="color:{{ $platform->color }}"></i>
-                        @else
-                            <span class="text-4xl font-black" style="color:{{ $platform->color ?: '#4f46e5' }}">
-                                {{ strtoupper(substr($platform->name, 0, 1)) }}
-                            </span>
-                        @endif
-                    </div>
-
-                    <div class="min-w-0">
-                        <p class="text-xs text-base-content/50">Belongs to</p>
-                        <a href="{{ route('admin.platforms.show',['platform'=>$platform->slug]) }}" class="font-bold hover:opacity-80" style="color:{{ $platform->color }}">
-                            {{ $platform->name }}
-                        </a>
-                    </div>
+                <div class="border border-gray-300"></div>
+                <div class="flex-1 w-full sm:border sm:border-gray-300 p-5 grid grid-cols-1 gap-2">
+                    @foreach($historyRight as $item)
+                        <div class="info-row flex items-center justify-between gap-4">
+                            <span class="text-sm text-base-content/60"> {{ $item['label'] }} </span>
+        
+                            <div class="min-w-0 text-right">
+                                <div class="text-sm {{ $item['cl'] ?? '' }}"> 
+                                    {{ $item['value'] }} 
+                                
+                                    @if(!empty($item['subvalue']))
+                                        {{-- <span class="mt-0.5 ml-1 text-[9px] font-bold uppercase tracking-wider text-black"> ({{ $item['subvalue'] }}) </span> --}}
+                                        <span class="mt-0.5 ml-1 text-[9px] font-bold tracking-wider uppercase
+                                            {{ strtolower($item['subvalue']) === 'super admin' ? 'text-blue-600' : (strtolower($item['subvalue']) === 'admin' ? 'text-green-600' : (strtolower($item['subvalue']) === 'user' ? 'text-red-600' : 'text-black')) }}">
+                                            ({{ $item['subvalue'] }})
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-
-                <a href="{{ route('admin.platforms.show',['platform'=>$platform->slug]) }}" class="btn btn-outline btn-sm mt-4 w-full gap-2">
-                    View Platform <i class="fa-solid fa-arrow-right"></i>
-                </a>
-            </section>
-        </aside>
-    </div>
+            </div>
+        </div>
+    </section>
 
     {{-- ================= Active Page Danger Zone ==================== --}}
     @if(!$platformGroup->trashed())

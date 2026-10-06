@@ -178,23 +178,57 @@
                     </button>
                 </div>
 
-                <div class="cv-submenu"
-                    x-cloak x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-                    <a href="#" class="cv-subnav-link {{ request()->routeIs('admin.countries.*') ? 'cv-subnav-link--active' : '' }}">
-                        <span class="flex w-4 justify-center"><i class="fa-solid fa-earth-asia text-[11px]"></i></span>
-                        <span>Countries</span>
-                    </a>
-                    <a href="#" class="cv-subnav-link {{ request()->routeIs('admin.cities.*') ? 'cv-subnav-link--active' : '' }}">
-                        <span class="flex w-4 justify-center"><i class="fa-solid fa-city text-[11px]"></i></span>
-                        <span>Cities</span>
-                    </a>
-                    <a href="#" class="cv-subnav-link {{ request()->routeIs('admin.industries.*') ? 'cv-subnav-link--active' : '' }}">
-                        <span class="flex w-4 justify-center"><i class="fa-solid fa-tags text-[11px]"></i></span>
-                        <span>Industries</span>
-                    </a>
-                </div>
+<div class="cv-submenu"
+    x-cloak
+    x-show="open"
+    x-transition:enter="transition ease-out duration-150"
+    x-transition:enter-start="opacity-0 -translate-y-1"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-100"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 translate-y-1">
+
+    @if(Route::has('admin.industries.index'))
+        <a href="{{ route('admin.industries.index') }}"
+           class="cv-subnav-link {{ request()->routeIs('admin.industries.*') ? 'cv-subnav-link--active' : '' }}">
+            <span class="flex w-4 justify-center">
+                <i class="fa-solid fa-layer-group text-[11px]"></i>
+            </span>
+            <span>Industries</span>
+        </a>
+    @endif
+
+    @if(Route::has('admin.countries.index'))
+        <a href="{{ route('admin.countries.index') }}"
+           class="cv-subnav-link {{ request()->routeIs('admin.countries.*') ? 'cv-subnav-link--active' : '' }}">
+            <span class="flex w-4 justify-center">
+                <i class="fa-solid fa-earth-asia text-[11px]"></i>
+            </span>
+            <span>Countries</span>
+        </a>
+    @endif
+
+    @if(Route::has('admin.countries.states.index'))
+        <a href="{{ route('admin.countries.states.index', ['country' => 'bangladesh']) }}"
+           class="cv-subnav-link {{ request()->routeIs('admin.countries.states.*') ? 'cv-subnav-link--active' : '' }}">
+            <span class="flex w-4 justify-center">
+                <i class="fa-solid fa-map-location-dot text-[11px]"></i>
+            </span>
+            <span>States / Divisions</span>
+        </a>
+    @endif
+
+    @if(Route::has('admin.cities.index'))
+        <a href="{{ route('admin.cities.index') }}"
+           class="cv-subnav-link {{ request()->routeIs('admin.cities.*') ? 'cv-subnav-link--active' : '' }}">
+            <span class="flex w-4 justify-center">
+                <i class="fa-solid fa-city text-[11px]"></i>
+            </span>
+            <span>Cities</span>
+        </a>
+    @endif
+
+</div>
             </div>
         </div>
 

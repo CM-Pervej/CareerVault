@@ -420,11 +420,17 @@
                             <span class="text-sm text-base-content/60"> {{ $item['label'] }} </span>
         
                             <div class="min-w-0 text-right">
-                                <div class="text-sm {{ $item['cl'] ?? '' }}"> {{ $item['value'] }} </div>
-        
-                                @if(!empty($item['subvalue']))
-                                    <div class="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-500"> {{ $item['subvalue'] }} </div>
-                                @endif
+                                <div class="text-sm {{ $item['cl'] ?? '' }}"> 
+                                    {{ $item['value'] }} 
+                                
+                                    @if(!empty($item['subvalue']))
+                                        {{-- <span class="mt-0.5 ml-1 text-[9px] font-bold uppercase tracking-wider text-black"> ({{ $item['subvalue'] }}) </span> --}}
+                                        <span class="mt-0.5 ml-1 text-[9px] font-bold tracking-wider uppercase
+                                            {{ strtolower($item['subvalue']) === 'super admin' ? 'text-blue-600' : (strtolower($item['subvalue']) === 'admin' ? 'text-green-600' : (strtolower($item['subvalue']) === 'user' ? 'text-red-600' : 'text-black')) }}">
+                                            ({{ $item['subvalue'] }})
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     @endforeach

@@ -1,0 +1,21 @@
+Company
+│
+├── Industry
+│   └── Software & Technology
+│
+├── Company Type
+│   └── Startup / Private / Public / etc.
+│
+├── Business Domains
+│   ├── SaaS
+│   ├── E-commerce
+│   ├── FinTech
+│   └── ...
+│
+└── Products / Technologies
+    ├── Web
+    ├── Mobile
+    ├── Desktop
+    ├── API
+    ├── Cloud
+    └── ...

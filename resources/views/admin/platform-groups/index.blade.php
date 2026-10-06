@@ -325,7 +325,7 @@
 
                         @if($search || $platformSlug || $groupType || $accessType || $status !== null || $bangladeshFocus)
                             <span class="text-base-content/35">of</span>
-                            <span class="font-semibold text-base-content/60"> {{ number_format($total) }} </span>
+                            <span class="font-semibold text-base-content/60"> {{ number_format($totalGroups) }} </span>
                         @endif
                     </div>
 
@@ -572,7 +572,7 @@
                                     <li>
                                         @can('delete',$group)
                                             <button
-                                                {{-- type="button" --}}
+                                                type="button"
                                                 class="text-error flex items-center gap-2 hover:bg-error/10"
                                                 title="Move group to trash"
                                                 data-admin-action

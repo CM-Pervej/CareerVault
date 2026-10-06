@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PlatformGroupRequest;
 use App\Models\Platform;
 use App\Models\PlatformGroup;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -295,22 +296,86 @@ class PlatformGroupController extends Controller
             ->orderBy('group_type')
             ->pluck('group_type');
 
+        $deletedByUsers = User::whereIn(
+            'id',
+            PlatformGroup::onlyTrashed()
+                ->whereNotNull('deleted_by')
+                ->distinct()
+                ->pluck('deleted_by')
+        )->orderBy('name')->get(['id', 'name', 'role']);
+
         $groups = PlatformGroup::onlyTrashed()
             ->with([
                 'platform:id,name,slug,logo,icon,color',
                 'deletedBy:id,name,slug,role',
             ])
-            ->when(request('platform'), fn ($query) => $query->where('platform_id', request('platform')))
-            ->when(request('type'), fn ($query) => $query->where('group_type', request('type')))
-            ->when(request('access_type'), fn ($query) => $query->where('access_type',request('access_type')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->input('search');
+
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('url', 'like', "%{$search}%")
+                        ->orWhere('short_desc', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->filled('platform'), function ($query) use ($request) {
+                $query->where('platform_id', $request->input('platform'));
+            })
+            ->when($request->filled('type'), function ($query) use ($request) {
+                $query->where('group_type', $request->input('type'));
+            })
+            ->when($request->filled('access_type'), function ($query) use ($request) {
+                $query->where('access_type', $request->input('access_type'));
+            })
+            ->when($request->filled('deleted_by'), function ($query) use ($request) {
+                $query->where('deleted_by', $request->input('deleted_by'));
+            })
+            ->when($request->filled('deleted_period'), function ($query) use ($request) {
+                match ($request->input('deleted_period')) {
+                    'today' => $query->whereDate('deleted_at', today()),
+
+                    'yesterday' => $query->whereDate(
+                        'deleted_at',
+                        today()->subDay()
+                    ),
+
+                    'last_7_days' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subDays(7)
+                    ),
+
+                    'last_30_days' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subDays(30)
+                    ),
+
+                    'last_3_months' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subMonths(3)
+                    ),
+
+                    'this_year' => $query->whereYear(
+                        'deleted_at',
+                        now()->year
+                    ),
+
+                    default => null,
+                };
+            })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
 
         return view('admin.platform-groups.trash', compact(
-            'groups', 
-            'platforms', 
-            'groupTypes'
+            'groups',
+            'platforms',
+            'groupTypes',
+            'deletedByUsers'
         ));
     }
 

@@ -149,128 +149,309 @@
     </details>
 
     {{-- =========================== Filters =========================== --}}
-    <details class="cv-section overflow-hidden border border-base-300 bg-base-100 shadow-sm sm:rounded-lg" data-section="filters" open>
+    <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm" data-section="groupFilters" open>
         <summary class="flex items-center justify-between gap-3 p-4 hover:bg-base-200/40">
             <span class="flex min-w-0 items-center gap-2.5">
                 <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                     <i class="fa-solid fa-sliders text-xs"></i>
                 </span>
-
                 <span class="min-w-0">
-                    <span class="block text-sm font-semibold">Filter Deleted Groups</span>
-
-                    <span class="block truncate text-xs text-base-content/50">Narrow the trash list by platform, group type, or access</span>
+                    <span class="block text-sm font-semibold">Filter Groups</span>
+                    <span class="block truncate text-xs text-base-content/50">Narrow the trash list by platform, type, access, or deletion details</span>
                 </span>
             </span>
 
             <i class="fa-solid fa-chevron-down cv-chevron text-xs text-base-content/50"></i>
         </summary>
 
-        <div class="p-5">
-            <form method="GET" class="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto]">
-                {{-- Platform --}}
-                <div>
-                    <label class="label">
-                        <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/50">Platform</span>
-                    </label>
+        <div class="rounded-lg border border-base-300 bg-base-100 shadow-sm">
+            <form method="GET" action="{{ route('admin.platform-groups.trash') }}">
+                {{-- Filter Fields --}}
+                <div class="border-b border-base-300 p-4 sm:p-5">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
+                        {{-- Search --}}
+                        <div class="form-control min-w-0 sm:col-span-2 lg:col-span-2">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-brands fa-searchengin mr-1"></i> Search
+                                </span>
+                            </div>
 
-                    <select name="platform" class="select select-bordered w-full">
-                        <option value="">All Platforms</option>
+                            <label class="input input-bordered flex w-full min-w-0 items-center gap-3">
+                                <i class="fa-solid fa-magnifying-glass shrink-0 text-base-content/40"></i>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search groups..." class="min-w-0 grow"/>
 
-                        @foreach($platforms as $item)
-                            <option value="{{ $item->id }}" @selected(request('platform') == $item->id)>
-                                {{ $item->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                                @if(request('search'))
+                                    <a href="{{ route('admin.platform-groups.trash', request()->except('search')) }}" class="btn btn-ghost btn-xs btn-circle shrink-0">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </a>
+                                @endif
+                            </label>
+                        </div>
+
+                        {{-- Platform --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-layer-group mr-1"></i> Platform
+                                </span>
+                            </div>
+
+                            <select name="platform" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                @foreach($platforms as $item)
+                                    <option value="{{ $item->id }}" @selected(request('platform') == $item->id)> {{ $item->name }} </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        {{-- Group Type --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-shapes mr-1"></i> Group Type
+                                </span>
+                            </div>
+
+                            <select name="type" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                @foreach($groupTypes as $type)
+                                    <option value="{{ $type }}" @selected(request('type') === $type)> {{ $type }} </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        {{-- Access --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-lock mr-1"></i> Access
+                                </span>
+                            </div>
+
+                            <select name="access_type" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                <option value="public" @selected(request('access_type') === 'public')>Public</option>
+                                <option value="members_only" @selected(request('access_type') === 'members_only')>Members Only</option>
+                                <option value="private" @selected(request('access_type') === 'private')>Private</option>
+                            </select>
+                        </label>
+
+                        {{-- Deleted By --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-user-xmark mr-1"></i> Deleted By
+                                </span>
+                            </div>
+
+                            <select name="deleted_by" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                @foreach($deletedByUsers as $user)
+                                    <option value="{{ $user->id }}" @selected(request('deleted_by') == $user->id)>
+                                        {{ $user->name }}
+                                        @if($user->role)
+                                            ({{ ucfirst(str_replace('_', ' ', $user->role)) }})
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        {{-- Deleted Period --}}
+                        <label class="form-control min-w-0">
+                            <div class="label py-0 pb-1.5">
+                                <span class="label-text text-xs font-bold">
+                                    <i class="fa-solid fa-calendar-days mr-1"></i> Deleted Period
+                                </span>
+                            </div>
+
+                            <select name="deleted_period" class="select select-bordered w-full min-w-0">
+                                <option value="">Select</option>
+                                <option value="today" @selected(request('deleted_period') === 'today')>Today</option>
+                                <option value="yesterday" @selected(request('deleted_period') === 'yesterday')>Yesterday</option>
+                                <option value="last_7_days" @selected(request('deleted_period') === 'last_7_days')>Last 7 Days</option>
+                                <option value="last_30_days" @selected(request('deleted_period') === 'last_30_days')>Last 30 Days</option>
+                                <option value="last_3_months" @selected(request('deleted_period') === 'last_3_months')>Last 3 Months</option>
+                                <option value="this_year" @selected(request('deleted_period') === 'this_year')>This Year</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    {{-- Filter Actions --}}
+                    <div class="mt-5 flex flex-col gap-4 border-t border-base-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        {{-- Applied Filters --}}
+                        <div class="flex min-w-0 flex-wrap items-center gap-2 text-xs text-base-content/50">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-filter"></i>
+                                <span>Filters applied:</span>
+                            </span>
+
+                            {{-- Search --}}
+                            @if(request('search'))
+                                <span class="badge badge-sm badge-primary gap-1.5">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                                </span>
+                            @endif
+
+                            {{-- Platform --}}
+                            @if(request('platform'))
+                                @php
+                                    $selectedPlatform = $platforms->firstWhere('id', request('platform'));
+                                @endphp
+
+                                <span class="badge badge-sm badge-info gap-1.5">
+                                    <i class="fa-solid fa-layer-group"></i> {{ $selectedPlatform?->name ?? request('platform') }}
+                                </span>
+                            @endif
+
+                            {{-- Group Type --}}
+                            @if(request('type'))
+                                <span class="badge badge-sm badge-secondary gap-1.5">
+                                    <i class="fa-solid fa-shapes"></i> {{ request('type') }}
+                                </span>
+                            @endif
+
+                            {{-- Access --}}
+                            @if(request('access_type'))
+                                <span class="badge badge-sm badge-accent gap-1.5">
+                                    <i class="fa-solid fa-lock"></i> {{ ucfirst(str_replace('_', ' ', request('access_type'))) }}
+                                </span>
+                            @endif
+
+                            {{-- Deleted By --}}
+                            @if(request('deleted_by'))
+                                @php
+                                    $selectedDeletedBy = $deletedByUsers->firstWhere('id', request('deleted_by'));
+                                @endphp
+
+                                <span class="badge badge-sm badge-warning gap-1.5">
+                                    <i class="fa-solid fa-user-xmark"></i> {{ $selectedDeletedBy?->name ?? request('deleted_by') }}
+                                </span>
+                            @endif
+
+                            {{-- Deleted Period --}}
+                            @if(request('deleted_period'))
+                                @php
+                                    $deletedPeriodLabels = [
+                                        'today' => 'Today',
+                                        'yesterday' => 'Yesterday',
+                                        'last_7_days' => 'Last 7 Days',
+                                        'last_30_days' => 'Last 30 Days',
+                                        'last_3_months' => 'Last 3 Months',
+                                        'this_year' => 'This Year',
+                                    ];
+                                @endphp
+
+                                <span class="badge badge-sm badge-success gap-1.5">
+                                    <i class="fa-solid fa-calendar-days"></i> {{ $deletedPeriodLabels[request('deleted_period')] ?? request('deleted_period') }}
+                                </span>
+                            @endif
+
+                            {{-- Clear All --}}
+                            @if(request('search') || request('platform') || request('type') || request('access_type') || request('deleted_by') || request('deleted_period'))
+                                <a href="{{ route('admin.platform-groups.trash') }}" class="link link-error font-semibold">Clear all</a>
+                            @else
+                                <span class="text-base-content/30">None</span>
+                            @endif
+                        </div>
+
+                        {{-- Apply --}}
+                        <button type="submit" class="btn btn-sm btn-primary w-full shrink-0 gap-2 sm:w-auto">
+                            <i class="fa-solid fa-filter"></i> Apply Filters
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Group Type --}}
-                <div>
-                    <label class="label">
-                        <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/50">Group Type</span>
-                    </label>
+                {{-- Result Summary --}}
+                <div class="flex flex-col gap-2 px-5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-list text-base-content/40"></i>
 
-                    <select name="type" class="select select-bordered w-full">
-                        <option value="">All Types</option>
+                        <span>
+                            Showing <strong>{{ $groups->count() }}</strong> {{ $groups->count() === 1 ? 'group' : 'groups' }}
+                        </span>
 
-                        @foreach($groupTypes as $type)
-                            <option value="{{ $type }}" @selected(request('type') === $type)>
-                                {{ $type }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                        @if(request('search') || request('platform') || request('type') || request('access_type') || request('deleted_by') || request('deleted_period'))
+                            <span class="text-base-content/35">of</span>
+                            <span class="font-semibold text-base-content/60"> {{ number_format($groups->total()) }} </span>
+                        @endif
+                    </div>
 
-                {{-- Access --}}
-                <div>
-                    <label class="label">
-                        <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/50">Access</span>
-                    </label>
-
-                    <select name="access_type" class="select select-bordered w-full">
-                        <option value="">All Access Types</option>
-                        <option value="public" @selected(request('access_type') === 'public')>Public</option>
-                        <option value="members_only" @selected(request('access_type') === 'members_only')>Members Only</option>
-                        <option value="private" @selected(request('access_type') === 'private')>Private</option>
-                    </select>
-                </div>
-
-                {{-- Actions --}}
-                <div class="flex gap-2 lg:items-end">
-                    <button type="submit" class="btn btn-primary gap-2">
-                        <i class="fa-solid fa-filter"></i> Apply
-                    </button>
-
-                    @if(request()->filled('platform') || request()->filled('type') || request()->filled('access_type'))
-                        <a href="{{ route('admin.platform-groups.trash') }}"
-                        class="btn btn-ghost gap-2">
-                            <i class="fa-solid fa-rotate-left"></i> Reset
-                        </a>
-                    @endif
+                    <div class="text-xs text-base-content/40">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Deleted platform groups and communities
+                    </div>
                 </div>
             </form>
-
-            {{-- Active Filters --}}
-            @if(request()->filled('platform') || request()->filled('type') || request()->filled('access_type'))
-                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-base-200 pt-4">
-                    <span class="mr-1 text-xs font-bold uppercase tracking-wider text-base-content/45">Active Filters</span>
-
-                    @if(request('platform'))
-                        @php
-                            $selectedPlatform = $platforms->firstWhere('id', request('platform'));
-                        @endphp
-
-                        @if($selectedPlatform)
-                            <span class="badge badge-primary badge-outline gap-1">
-                                <i class="fa-solid fa-layer-group text-[10px]"></i> {{ $selectedPlatform->name }}
-                            </span>
-                        @endif
-                    @endif
-
-                    @if(request('type'))
-                        <span class="badge badge-secondary badge-outline gap-1">
-                            <i class="fa-solid fa-tag text-[10px]"></i> {{ request('type') }}
-                        </span>
-                    @endif
-
-                    @if(request('access_type'))
-                        @php
-                            $selectedAccessLabel = match(request('access_type')) {
-                                'members_only' => 'Members Only',
-                                'private' => 'Private',
-                                default => 'Public',
-                            };
-                        @endphp
-
-                        <span class="badge badge-accent badge-outline gap-1">
-                            <i class="fa-solid fa-lock text-[10px]"></i> {{ $selectedAccessLabel }}
-                        </span>
-                    @endif
-                </div>
-            @endif
         </div>
     </details>
+
+    {{-- ======================= ACTIVE FILTERS ===================== --}}
+    @if(request('search') || request('platform') || request('type') || request('access_type') || request('deleted_by') || request('deleted_period'))
+        <div class="flex flex-wrap items-center gap-2 px-1">
+            <span class="text-xs font-semibold text-base-content/50">Active filters:</span>
+            {{-- Search --}}
+            @if(request('search'))
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search: {{ request('search') }}
+                </span>
+            @endif
+
+            {{-- Platform --}}
+            @if(request('platform'))
+                @php
+                    $selectedPlatform = $platforms->firstWhere('id', request('platform'));
+                @endphp
+
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-layer-group"></i> Platform: {{ $selectedPlatform?->name ?? request('platform') }}
+                </span>
+            @endif
+
+            {{-- Group Type --}}
+            @if(request('type'))
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-shapes"></i> Type: {{ request('type') }}
+                </span>
+            @endif
+
+            {{-- Access --}}
+            @if(request('access_type'))
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-lock"></i> Access: {{ ucfirst(str_replace('_', ' ', request('access_type'))) }}
+                </span>
+            @endif
+
+            {{-- Deleted By --}}
+            @if(request('deleted_by'))
+                @php
+                    $selectedDeletedBy = $deletedByUsers->firstWhere('id', request('deleted_by'));
+                @endphp
+
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-user-xmark"></i> Deleted By: {{ $selectedDeletedBy?->name ?? request('deleted_by') }}
+                </span>
+            @endif
+
+            {{-- Deleted Period --}}
+            @if(request('deleted_period'))
+                @php
+                    $deletedPeriodLabels = [
+                        'today' => 'Today',
+                        'yesterday' => 'Yesterday',
+                        'last_7_days' => 'Last 7 Days',
+                        'last_30_days' => 'Last 30 Days',
+                        'last_3_months' => 'Last 3 Months',
+                        'this_year' => 'This Year',
+                    ];
+                @endphp
+
+                <span class="badge badge-sm badge-outline gap-1">
+                    <i class="fa-solid fa-calendar-days"></i> Period: {{ $deletedPeriodLabels[request('deleted_period')] ?? request('deleted_period') }}
+                </span>
+            @endif
+        </div>
+    @endif
 
     {{-- =========================== Trash List =========================== --}}
     <div class="mt-10 rounded-lg sm:mt-5 sm:border sm:border-gray-200 sm:shadow-sm">

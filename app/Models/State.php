@@ -5,21 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Country extends Model
+class State extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
+        'country_id',
         'name',
         'slug',
-        'iso2',
-        'iso3',
-        'phone_code',
-        'currency_code',
-        'currency_name',
-        'capital',
-        'region',
-        'subregion',
+        'code',
+        'type',
         'is_active',
         'sort_order',
         'created_by',
@@ -35,19 +30,9 @@ class Country extends Model
         ];
     }
 
-    public function states()
+    public function country()
     {
-        return $this->hasMany(State::class);
-    }
-
-    public function companies()
-    {
-        return $this->belongsToMany(Company::class);
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
+        return $this->belongsTo(Country::class);
     }
 
     public function cities()
@@ -68,5 +53,10 @@ class Country extends Model
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }

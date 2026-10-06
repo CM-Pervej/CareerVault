@@ -2,20 +2,39 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Override;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class City extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
-    protected $fillable = ['country_id','name', 'slug'];
+    protected $fillable = [
+        'country_id',
+        'state_id',
+        'name',
+        'slug',
+        'code',
+        'is_capital',
+        'is_active',
+        'sort_order',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+    ];
 
-    #[Override]
-    public function getRouteKeyName(): string
+    protected function casts(): array
     {
-        return 'slug';
+        return [
+            'is_capital' => 'boolean',
+            'is_active' => 'boolean',
+            'sort_order' => 'integer',
+        ];
+    }
+
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class);
     }
 
     public function country()
@@ -23,8 +42,28 @@ class City extends Model
         return $this->belongsTo(Country::class);
     }
 
-    public function companies()
+    public function state()
     {
-        return $this->belongsToMany(Company::class);
+        return $this->belongsTo(State::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }

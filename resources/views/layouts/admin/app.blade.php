@@ -112,8 +112,8 @@
     {{-- to check all borders --}}
     {{-- <script>
         document.querySelectorAll('*').forEach(element=>{
-        element.style.outline='1px solid red';
-    });
+            element.style.outline='1px solid red';
+        });
     </script> --}}
 </body>
 </html>

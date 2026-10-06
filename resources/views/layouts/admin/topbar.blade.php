@@ -44,7 +44,7 @@
             </button>
 
             <div class="min-w-0">
-                <div class="cv-admin-label sm:mb-0.5 truncate text-[var(--cv-brass-dark)]/70">{{ $crumb }}</div>
+                <div class="hidden sm:inline cv-admin-label sm:mb-0.5 truncate text-[var(--cv-brass-dark)]/70">{{ $crumb }}</div>
                 <h1 class="cv-admin-title truncate text-xl text-[var(--cv-ink)]">
                     @yield('page_title', $autoTitle)
                 </h1>
