@@ -14,7 +14,7 @@ class PlatformRequest extends FormRequest
 
     public function rules(): array
     {
-        $platform=$this->route('platform');
+        $platform = $this->route('platform');
 
         return [
             'name'=>[
@@ -90,16 +90,18 @@ class PlatformRequest extends FormRequest
                 'max:255',
             ],
 
-            'logo'=>[
+            'logo' => [
                 'nullable',
-                'string',
-                'max:2048',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048', // 2 MB
             ],
 
-            'cover_image'=>[
+            'cover_image' => [
                 'nullable',
-                'string',
-                'max:2048',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120', // 5 MB
             ],
 
             'sort_order'=>[
@@ -125,6 +127,12 @@ class PlatformRequest extends FormRequest
                 'max:'.date('Y'),
             ],
 
+            'founded_by'=>[
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'last_verified_at'=>[
                 'nullable',
                 'date',
@@ -139,5 +147,22 @@ class PlatformRequest extends FormRequest
             'is_active'=>$this->boolean('is_active'),
             'is_bangladesh_focused'=>$this->boolean('is_bangladesh_focused'),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'logo.uploaded' => $this->uploadErrorMessage('logo'),
+            'cover_image.uploaded' => $this->uploadErrorMessage('cover_image'),
+        ];
+    }
+
+    private function uploadErrorMessage(string $field): string
+    {
+        $file = $this->file($field);
+
+        return $file
+            ? $file->getErrorMessage()
+            : 'The file could not be uploaded.';
     }
 }

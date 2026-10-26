@@ -19,3 +19,116 @@ Company
     ├── API
     ├── Cloud
     └── ...
+
+
+1. companies
+- id
+- name
+- slug
+- legal_name
+- description
+- short_description
+- logo_path
+- website_url
+- career_page_url
+- founded_year
+- employee_count
+- company_size_id
+- company_type_id
+- ownership_type_id
+- headquarters_location_id
+- parent_company_id
+- primary_industry_id
+- email
+- phone
+- linkedin_url
+- status
+- notes
+- created_at
+- updated_at
+- deleted_at
+
+2. countries
+
+3. states
+
+4. cities
+
+5. company_locations
+- id
+- company_id
+- city_id
+- location_name
+- location_type
+- address
+- postal_code
+- latitude
+- longitude
+- is_headquarters
+- phone
+- email
+- created_at
+- updated_at
+
+6. company_sizes
+
+7. company_types
+
+8. ownership_types
+
+9. industries
+
+11. technologies
+
+12. specialties
+
+13. business_models
+
+14. company_industry
+
+16. company_technology
+- company_id
+- technology_id
+- created_at
+- updated_at
+
+18. business_model_company
+- company_id
+- business_model_id
+- created_at
+- updated_at
+
+19. company_countries
+
+20. company_platform
+
+21. company_relationships
+- id
+- company_id
+- related_company_id
+- relationship_type
+- start_date
+- end_date
+- notes
+- created_at
+- updated_at
+
+22. company_sources
+- id
+- company_id
+- source_name
+- source_url
+- last_verified_at
+- verified_by
+- notes
+- created_at
+- updated_at
+
+23. company_notes
+- id
+- company_id
+- title
+- content
+- created_at
+- updated_at
+- deleted_at

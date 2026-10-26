@@ -66,7 +66,7 @@ class PlatformPageRequest extends FormRequest
                 'string',
             ],
 
-                        'access_type' => [
+            'access_type' => [
                 'required',
                 Rule::in([
                     'public',

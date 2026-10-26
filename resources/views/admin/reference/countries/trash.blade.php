@@ -6,65 +6,43 @@
 @section('content')
 <div class="space-y-3 p-4 sm:p-6">
     {{-- Header --}}
-    <header class="relative overflow-hidden sm:mb-6">
-        <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-start gap-4">                
-                <div>
-                    <div class="flex gap-3 size-11 shrink-0 items-center rounded-lg bg-error/10">
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-error/10 text-error">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </div>
-                        <h1 class="cv-admin-title text-3xl sm:text-4xl whitespace-nowrap text-error">Country Trash</h1>
-                    </div>
+    <x-admin.ui.page-header
+        icon="fa-solid fa-trash-can"    
+        title="Country Trash"
+        title-color="text-error"
+        title-bg-color="bg-error/10 text-error"
+        description="Manage country reference data used throughout CareerVault."
+        :back-route="route('admin.countries.index')"
+        back-text="Back to Countries"
+    />
 
-                    <p class="mt-2 max-w-2xl text-sm leading-6 text-base-content/65 text-center sm:text-left">Deleted countries remain safely stored here until they are restored or permanently removed. Only authorized administrators can manage deleted records.</p>
+    <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
+        <span class="badge badge-error badge-outline gap-1">
+            <i class="fa-solid fa-trash text-[10px]"></i> Soft Deleted
+        </span>
 
-                    <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
-                        <span class="badge badge-error badge-outline gap-1">
-                            <i class="fa-solid fa-trash text-[10px]"></i> Soft Deleted
-                        </span>
-
-                        <span class="badge badge-warning badge-outline gap-1">
-                            <i class="fa-solid fa-lock text-[10px]"></i> Super Admin Access
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <a href="{{ route('admin.countries.index') }}" class="btn btn-outline gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Back to Countries
-            </a>
-        </div>
-    </header>
+        <span class="badge badge-warning badge-outline gap-1">
+            <i class="fa-solid fa-lock text-[10px]"></i> Super Admin Access
+        </span>
+    </div>
 
     <div class="card border border-base-300 bg-base-100 shadow-sm">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('admin.countries.trash') }}" class="flex gap-2">
                 <label class="input input-bordered input-sm flex flex-1 items-center gap-2">
                     <i class="fa-solid fa-magnifying-glass text-base-content/50"></i>
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ request('search') }}"
-                        placeholder="Search deleted countries..."
-                        class="grow"
-                    >
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search deleted countries..." class="grow">
                 </label>
-
-                <button type="submit" class="btn btn-neutral btn-sm">
-                    Search
-                </button>
+                <button type="submit" class="btn btn-neutral btn-sm">Search</button>
 
                 @if(request()->filled('search'))
-                    <a href="{{ route('admin.countries.trash') }}" class="btn btn-ghost btn-sm">
-                        Clear
-                    </a>
+                    <a href="{{ route('admin.countries.trash') }}" class="btn btn-ghost btn-sm">Clear</a>
                 @endif
             </form>
         </div>
     </div>
 
-        {{-- Trash List --}}
+    {{-- Trash List --}}
     <section class="rounded-lg sm:border sm:border-gray-200 sm:shadow-sm mt-10 sm:mt-5">
         {{-- Toolbar --}}
         <div class="px-5 py-4">
@@ -129,7 +107,7 @@
                                         </div>
     
                                         <div class="min-w-0">
-                                            <p class="font-medium text-slate-800 truncate">{{ $country->name }}</p>
+                                            <a href="{{ route('admin.countries.show',$country) }}" class="font-medium text-slate-800 truncate">{{ $country->name }}</a>
                                             <p class="text-xs text-slate-400 truncate">{{ $country->slug }}</p>
                                         </div>
                                     </div>
@@ -399,14 +377,12 @@
                     <i class="fa-solid fa-trash-can text-3xl"></i>
                 </div>
 
-                <h3 class="mt-6 text-xl font-black">No deleted countries</h3>
-                <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-base-content/55">The trash is currently empty. Deleted countries will appear here and can be restored while they remain in the trash.</p>
-
-                <div class="mt-6 flex justify-center">
-                    <a href="{{ route('admin.countries.index') }}" class="btn btn-primary gap-2">
-                        <i class="fa-solid fa-file-lines"></i> View Countries
-                    </a>
-                </div>
+                <x-admin.ui.empty-state
+                    title="No deleted countries"
+                    description="The trash is currently empty. Deleted countries will appear here and can be restored while they remain in the trash."
+                    :action-route="route('admin.countries.index')"
+                    action-text="View Countries"
+                />
             </div>
         @endif
     </section>

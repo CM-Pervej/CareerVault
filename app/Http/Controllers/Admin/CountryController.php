@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -139,13 +140,54 @@ class CountryController extends Controller
         return redirect()->route('admin.countries.index')->with('success','Country updated successfully.');
     }
 
+    // public function destroy(Country $country)
+    // {
+    //     $country->deleted_by = Auth::id();
+    //     $country->save();
+    //     $country->delete();
+
+    //     return redirect()->route('admin.countries.index')->with('success','Country moved to trash.');
+    // }
+
+    
     public function destroy(Country $country)
     {
-        $country->deleted_by = Auth::id();
-        $country->save();
-        $country->delete();
+        DB::transaction(function () use ($country) {
+            $userId = Auth::id();
 
-        return redirect()->route('admin.countries.index')->with('success','Country moved to trash.');
+            // Trash cities directly associated with the country.
+            $country->cities()
+                ->whereNull('deleted_at')
+                ->update([
+                    'deleted_at' => now(),
+                    'deleted_by' => $userId,
+                ]);
+
+            // Trash cities and states associated through states.
+            $states = $country->states()->get();
+
+            foreach ($states as $state) {
+                $state->cities()
+                    ->whereNull('deleted_at')
+                    ->update([
+                        'deleted_at' => now(),
+                        'deleted_by' => $userId,
+                    ]);
+
+                $state->deleted_by = $userId;
+                $state->save();
+                $state->delete();
+            }
+
+            // Finally, trash the country.
+            $country->deleted_by = $userId;
+            $country->save();
+            $country->delete();
+        });
+
+        return redirect()
+            ->route('admin.countries.index')
+            ->with('success', 'Country and its dependent states and cities moved to trash.');
     }
 
     public function trash(Request $request)
@@ -173,21 +215,88 @@ class CountryController extends Controller
         return view('admin.reference.countries.trash',compact('countries'));
     }
 
+    // public function restore(Country $country)
+    // {
+    //     $country->restore();
+
+    //     $country->update([
+    //         'deleted_by' => null,
+    //     ]);
+
+    //     return redirect()->route('admin.countries.trash')->with('success','Country restored successfully.');
+    // }
+    
     public function restore(Country $country)
     {
-        $country->restore();
+        DB::transaction(function () use ($country) {
+            $country->restore();
 
-        $country->update([
-            'deleted_by' => null,
-        ]);
+            $country->update(['deleted_by' => null]);
 
-        return redirect()->route('admin.countries.trash')->with('success','Country restored successfully.');
+            // Restore directly associated cities.
+            $country->cities()
+                ->onlyTrashed()
+                ->update([
+                    'deleted_at' => null,
+                    'deleted_by' => null,
+                ]);
+
+            // Restore trashed states and their trashed cities.
+            $states = $country->states()
+                ->onlyTrashed()
+                ->get();
+
+            foreach ($states as $state) {
+                $state->restore();
+                $state->update(['deleted_by' => null]);
+
+                $state->cities()
+                    ->onlyTrashed()
+                    ->update([
+                        'deleted_at' => null,
+                        'deleted_by' => null,
+                    ]);
+            }
+        });
+
+        return redirect()
+            ->route('admin.countries.trash')
+            ->with('success', 'Country and its dependent states and cities restored successfully.');
     }
 
+    // public function forceDelete(Country $country)
+    // {
+    //     $country->forceDelete();
+
+    //     return redirect()->route('admin.countries.trash')->with('success','Country permanently deleted.');
+    // }
+    
     public function forceDelete(Country $country)
     {
-        $country->forceDelete();
+        DB::transaction(function () use ($country) {
+            // Permanently delete cities associated directly with the country.
+            $country->cities()
+                ->withTrashed()
+                ->forceDelete();
 
-        return redirect()->route('admin.countries.trash')->with('success','Country permanently deleted.');
+            // Permanently delete states and their cities.
+            $states = $country->states()
+                ->withTrashed()
+                ->get();
+
+            foreach ($states as $state) {
+                $state->cities()
+                    ->withTrashed()
+                    ->forceDelete();
+
+                $state->forceDelete();
+            }
+
+            $country->forceDelete();
+        });
+
+        return redirect()
+            ->route('admin.countries.trash')
+            ->with('success', 'Country and its dependent states and cities permanently deleted.');
     }
 }

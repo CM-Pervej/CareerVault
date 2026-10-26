@@ -6,23 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('company_platform', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('platform_id')->constrained()->cascadeOnDelete();
-            $table->string('url');
+            $table->foreignId('company_id')
+                ->constrained('companies')
+                ->cascadeOnDelete();
+
+            $table->foreignId('platform_id')
+                ->constrained('platforms')
+                ->cascadeOnDelete();
+
+            $table->string('profile_url', 2048)->nullable();
+            $table->boolean('is_verified')->default(false);
+            $table->timestamp('last_verified_at')->nullable();
+
             $table->timestamps();
+
+            $table->primary(['company_id', 'platform_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('company_platform');

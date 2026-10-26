@@ -5,39 +5,22 @@
 @section('content')
 <div class="space-y-3 p-4 sm:p-6">
     {{-- ========================= HEADER ========================= --}}
-    <header class="relative overflow-hidden bg-white">
-        <div class="relative flex flex-col gap-6 lg:flex-row justify-center items-center lg:justify-between">
-            <div class="flex flex-col">
-                <div class="flex justify-center sm:justify-start gap-3 shrink-0 items-center rounded-lg">
-                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <i class="fa-solid fa-earth-americas text-lg"></i>
-                    </div>
-                    <h1 class="cv-admin-title text-3xl sm:text-4xl whitespace-nowrap text-primary">Countries</h1>
-                </div>
+    @php
+        $trashedCountryCount=\App\Models\Country::onlyTrashed()->count();
+    @endphp
 
-                <p class="mt-2 text-sm leading-6 text-base-content/65 text-center sm:text-left">Manage country reference data used throughout CareerVault.</p>
-            </div>
-
-            <div class="flex w-full gap-2 sm:w-auto">
-                <a href="{{ route('admin.countries.trash') }}" class="btn btn-ghost min-w-0 flex-1 gap-2 border border-base-300 sm:flex-none sm:border-transparent">
-                    <i class="fa-solid fa-trash-can"></i> Trash
-
-                    @php
-                        $trashedCountryCount=\App\Models\Country::onlyTrashed()->count();
-                    @endphp
-
-                    @if($trashedCountryCount>0)
-                        <span class="badge badge-error badge-sm"> {{ $trashedCountryCount }} </span>
-                    @endif
-                </a>
-
-                <a href="{{ route('admin.countries.create') }}" class="btn btn-primary min-w-0 flex-1 gap-2 whitespace-nowrap sm:flex-none">
-                    <i class="fa-solid fa-plus"></i> Add Country
-                </a>
-            </div>
-        </div>
-    </header>
-
+    <x-admin.ui.page-header
+        icon="fa-solid fa-earth-americas"    
+        title="Countries"
+        title-color="text-primary"
+        title-bg-color="bg-primary/10 text-primary"
+        description="Manage country reference data used throughout CareerVault."
+        :create-route="route('admin.countries.create')"
+        create-text="Add Country"
+        :trash-route="route('admin.countries.trash')"
+        :trash-count="$trashedCountryCount"
+    />
+    
     <section class="card border border-base-300 bg-base-100 shadow-sm">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('admin.countries.index') }}" class="flex flex-col gap-3 md:flex-row">
@@ -130,7 +113,7 @@
                                         </div>
 
                                         <div class="min-w-0">
-                                            <p class="font-medium text-slate-800 truncate">{{ $country->name }}</p>
+                                            <a href="{{ route('admin.countries.show',$country) }}" class="font-medium text-slate-800 truncate">{{ $country->name }}</a>
                                             <p class="text-xs text-slate-400 truncate">{{ $country->slug }}</p>
                                         </div>
                                     </div>

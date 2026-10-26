@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Industry extends Model
@@ -31,9 +32,12 @@ class Industry extends Model
         ];
     }
 
-    public function companies()
+    public function companies(): BelongsToMany
     {
-        return $this->belongsToMany(Company::class);
+        return $this->belongsToMany(
+            Company::class,
+            'company_industry'
+        )->withTimestamps();
     }
 
     public function parent()

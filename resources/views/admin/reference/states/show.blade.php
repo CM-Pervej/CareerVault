@@ -1,36 +1,21 @@
 @extends('layouts.admin.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+<div class="max-w-5xl mx-auto space-y-6">
 
-        <div class="flex items-center gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-            <div class="w-14 h-14 rounded-2xl bg-base-200 flex items-center justify-center text-xl">
-                <i class="fa-solid fa-map-location-dot text-primary"></i>
-            </div>
-
-            <div>
-                <div class="text-sm opacity-50">
-                    {{ $country->name }}
-                </div>
-
-                <h1 class="text-2xl font-bold">
-                    {{ $state->name }}
-                </h1>
-
-                <div class="text-sm opacity-50">
-                    {{ $state->type ?: 'Administrative subdivision' }}
-                </div>
-            </div>
-
-        </div>
+<x-admin.reference.page-header
+    title="{{ $state->name }}"
+    description="State / Division details."
+    icon="fa-solid fa-map"
+    :back-route="route('admin.states.index')"
+/>
 
         <div class="flex gap-2">
-
             <a
-                href="{{ route('admin.countries.states.edit', [$country, $state]) }}"
+                href="{{ route('admin.states.edit', $state) }}"
                 class="btn btn-primary"
             >
                 <i class="fa-solid fa-pen"></i>
@@ -38,164 +23,132 @@
             </a>
 
             <a
-                href="{{ route('admin.countries.states.index', $country) }}"
+                href="{{ route('admin.states.index') }}"
                 class="btn btn-ghost"
             >
                 <i class="fa-solid fa-arrow-left"></i>
                 Back
             </a>
-
         </div>
 
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         <div class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body p-5">
-                <div class="text-sm opacity-50">Country</div>
-                <div class="font-bold">{{ $country->name }}</div>
+            <div class="card-body">
+
+                <h2 class="font-bold text-lg mb-4">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Details
+                </h2>
+
+                <div class="space-y-4">
+
+                    <div>
+                        <div class="text-sm text-base-content/50">Country</div>
+
+                        <a
+                            href="{{ route('admin.countries.show', $state->country) }}"
+                            class="font-semibold link link-hover"
+                        >
+                            {{ $state->country->name }}
+                        </a>
+                    </div>
+
+                    <div>
+                        <div class="text-sm text-base-content/50">Type</div>
+                        <div class="font-semibold">
+                            {{ $state->type ?: 'Not specified' }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-sm text-base-content/50">Code</div>
+                        <div class="font-semibold">
+                            {{ $state->code ?: 'Not specified' }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-sm text-base-content/50">Slug</div>
+                        <div class="font-semibold">
+                            {{ $state->slug }}
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </div>
 
         <div class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body p-5">
-                <div class="text-sm opacity-50">Type</div>
-                <div class="font-bold">{{ $state->type ?: '—' }}</div>
-            </div>
-        </div>
+            <div class="card-body">
 
-        <div class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body p-5">
+                <h2 class="font-bold text-lg mb-4">
+                    <i class="fa-solid fa-city mr-2"></i>
+                    Cities
+                </h2>
 
-                <div class="text-sm opacity-50">Cities</div>
-
-                <div class="text-2xl font-bold">
+                <div class="text-4xl font-bold">
                     {{ $state->cities_count }}
                 </div>
 
+                <p class="text-base-content/60">
+                    cities associated with this State / Division
+                </p>
+
+                @if($state->cities_count > 0)
+                    <a
+                        href="{{ route('admin.cities.index', ['state' => $state->slug]) }}"
+                        class="btn btn-outline btn-sm mt-4"
+                    >
+                        View Cities
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                @endif
+
             </div>
         </div>
 
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
 
-        <div class="lg:col-span-2">
+            <h2 class="font-bold text-lg mb-4">
+                <i class="fa-solid fa-clock-rotate-left mr-2"></i>
+                Record Information
+            </h2>
 
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm">
 
-                <div class="card-body">
-
-                    <h2 class="card-title text-base">
-                        <i class="fa-solid fa-circle-info text-primary"></i>
-                        State / Division Information
-                    </h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-
-                        <div>
-                            <div class="text-xs opacity-50">Name</div>
-                            <div class="font-semibold mt-1">
-                                {{ $state->name }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Country</div>
-                            <div class="font-semibold mt-1">
-                                {{ $country->name }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Type</div>
-                            <div class="font-semibold mt-1">
-                                {{ $state->type ?: '—' }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Code</div>
-                            <div class="font-mono text-sm mt-1">
-                                {{ $state->code ?: '—' }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Slug</div>
-                            <div class="font-mono text-sm mt-1">
-                                {{ $state->slug }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Sort Order</div>
-                            <div class="font-semibold mt-1">
-                                {{ $state->sort_order }}
-                            </div>
-                        </div>
-
+                <div>
+                    <div class="text-base-content/50">Created</div>
+                    <div class="font-medium">
+                        {{ $state->created_at?->format('d M Y, h:i A') ?? '—' }}
                     </div>
+                </div>
 
+                <div>
+                    <div class="text-base-content/50">Last Updated</div>
+                    <div class="font-medium">
+                        {{ $state->updated_at?->format('d M Y, h:i A') ?? '—' }}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-base-content/50">Sort Order</div>
+                    <div class="font-medium">
+                        {{ $state->sort_order }}
+                    </div>
                 </div>
 
             </div>
 
         </div>
-
-        <div>
-
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
-
-                <div class="card-body">
-
-                    <h2 class="card-title text-base">
-                        <i class="fa-solid fa-clock-rotate-left text-primary"></i>
-                        Record
-                    </h2>
-
-                    <div class="space-y-4 mt-3">
-
-                        <div>
-                            <div class="text-xs opacity-50">Status</div>
-
-                            <div class="mt-1">
-                                @if($state->is_active)
-                                    <span class="badge badge-success">
-                                        Active
-                                    </span>
-                                @else
-                                    <span class="badge badge-ghost">
-                                        Inactive
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Created</div>
-                            <div class="text-sm font-medium mt-1">
-                                {{ $state->created_at?->format('d M Y, h:i A') }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs opacity-50">Updated</div>
-                            <div class="text-sm font-medium mt-1">
-                                {{ $state->updated_at?->format('d M Y, h:i A') }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
 
 </div>
+
 @endsection

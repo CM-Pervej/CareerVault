@@ -1,35 +1,20 @@
 @extends('layouts.admin.app')
 
+@section('title', 'City Trash | CareerVault')
+@section('page_title', 'City / Trash')
+
 @section('content')
-<div class="space-y-6">
-
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <div class="breadcrumbs text-sm">
-                <ul>
-                    <li><a href="{{ route('admin.cities.index') }}">Cities</a></li>
-                    <li>Trash</li>
-                </ul>
-            </div>
-
-            <h1 class="mt-1 text-2xl font-bold">City Trash</h1>
-            <p class="text-sm text-base-content/60">
-                Restore or permanently remove deleted cities.
-            </p>
-        </div>
-
-        <a href="{{ route('admin.cities.index') }}" class="btn btn-ghost btn-sm">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back to Cities
-        </a>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
+<div class="space-y-3 p-4 sm:p-6">
+    {{-- Header --}}
+    <x-admin.ui.page-header
+        icon="fa-solid fa-trash-can text-lg"    
+        title="City Trash"
+        title-bg-color="bg-error/10 text-error"
+        title-color="text-error"
+        description="Deleted cities remain safely stored here until they are restored or permanently removed. Only authorized administrators can manage deleted records."
+        :back-route="route('admin.cities.index')"
+        backText="Back to Cities"
+    />
 
     <div class="hidden overflow-x-auto rounded-box border border-base-300 bg-base-100 md:block">
         <table class="table">
@@ -38,7 +23,8 @@
                     <th>City</th>
                     <th>Country</th>
                     <th>State / Division</th>
-                    <th>Deleted</th>
+                    <th>Deleted AT</th>
+                    <th>Deleted BY</th>
                     <th class="text-right">Actions</th>
                 </tr>
             </thead>
@@ -56,35 +42,97 @@
                         <td>{{ $city->country?->name ?? '—' }}</td>
 
                         <td>{{ $city->state?->name ?? '—' }}</td>
+                        
+                        {{-- Deleted --}}
+                        <td>
+                            <div class="flex items-start gap-2">
+                                <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-error/10 text-error">
+                                    <i class="fa-solid fa-clock text-xs"></i>
+                                </div>
 
-                        <td class="text-sm">
-                            {{ $city->deleted_at?->format('d M Y, h:i A') }}
+                                <div class="whitespace-nowrap">
+                                    <div class="text-sm font-bold">
+                                        {{ $city->deleted_at?->format('d M Y, h:i A') }}
+                                    </div>
+
+                                    <div class="text-xs text-base-content/50">
+                                        {{ $city->deleted_at?->diffForHumans() }}
+                                    </div>
+                                </div>
+                            </div>
                         </td>
 
+                        {{-- Deleted By --}}
+                        <td class="py-4">
+                            @if($city->deletedBy)
+                                <div class="flex items-center gap-2.5">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                        <i class="fa-solid fa-user-shield text-xs"></i>
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <div class="max-w-[150px] truncate whitespace-nowrap text-sm font-bold" title="{{ $city->deletedBy->name }}">
+                                            {{ $city->deletedBy->name }}
+                                        </div>
+
+                                        <div class="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-base-content/40">
+                                            {{ str_replace('_', ' ', $city->deletedBy->role) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @else
+                                <div class="flex items-center gap-2 text-xs text-base-content/35">
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    <span>Unknown user</span>
+                                </div>
+                            @endif
+                        </td>
+
+                        {{-- Actions --}}
                         <td>
-                            <div class="flex justify-end gap-1">
-                                <form method="POST"
-                                      action="{{ route('admin.cities.restore', $city) }}">
-                                    @csrf
-                                    @method('PATCH')
-
-                                    <button class="btn btn-ghost btn-xs text-success"
-                                            title="Restore">
+                            <div class="flex justify-end gap-2">
+                                {{-- @can('restore', $page) --}}
+                                    <button
+                                        type="button"
+                                        class="btn btn-success btn-sm btn-outline gap-2"
+                                        title="Restore page"
+                                        data-admin-action
+                                        data-action-url="{{ route('admin.cities.restore', $city->slug) }}"
+                                        data-action-method="PATCH"
+                                        data-action-type="success"
+                                        data-action-title="Restore City"
+                                        data-action-description="Restore “{{ $city->name }}” and return it to the active cities."
+                                        data-action-icon="fa-solid fa-rotate-left"
+                                        data-action-confirm-icon="fa-solid fa-rotate-left"
+                                        data-action-confirm-text="Restore City"
+                                    >
                                         <i class="fa-solid fa-rotate-left"></i>
+
+                                        <span class="hidden lg:inline">Restore</span>
                                     </button>
-                                </form>
+                                {{-- @endcan --}}
 
-                                <form method="POST"
-                                      action="{{ route('admin.cities.force-delete', $city) }}"
-                                      onsubmit="return confirm('Permanently delete this city? This cannot be undone.')">
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button class="btn btn-ghost btn-xs text-error"
-                                            title="Delete permanently">
+                                {{-- @can('forceDelete', $city) --}}
+                                    <button
+                                        type="button"
+                                        class="btn btn-error btn-sm btn-outline gap-2"
+                                        title="Delete permanently"
+                                        data-admin-action
+                                        data-action-url="{{ route('admin.cities.force-delete', $city->slug) }}"
+                                        data-action-method="DELETE"
+                                        data-action-type="danger"
+                                        data-action-title="Delete Platform City Permanently"
+                                        data-action-description="Permanently delete “{{ $city->name }}”. This action cannot be undone."
+                                        data-action-icon="fa-solid fa-triangle-exclamation"
+                                        data-action-confirm-icon="fa-solid fa-trash-can"
+                                        data-action-confirm-text="Delete Forever"
+                                    >
                                         <i class="fa-solid fa-trash-can"></i>
+
+                                        <span class="hidden lg:inline whitespace-nowrap">Delete Forever</span>
                                     </button>
-                                </form>
+                                {{-- @endcan --}}
                             </div>
                         </td>
                     </tr>
@@ -115,31 +163,49 @@
                         </p>
                     </div>
 
-                    <div class="mt-3 flex justify-end gap-1">
-                        <form method="POST"
-                              action="{{ route('admin.cities.restore', $city) }}">
-                            @csrf
-                            @method('PATCH')
-
-                            <button class="btn btn-success btn-outline btn-xs">
+                    <div class="flex justify-end gap-2">
+                        {{-- @can('restore', $page) --}}
+                            <button
+                                type="button"
+                                class="btn btn-success btn-sm btn-outline gap-2"
+                                title="Restore page"
+                                data-admin-action
+                                data-action-url="{{ route('admin.cities.restore', $city->slug) }}"
+                                data-action-method="PATCH"
+                                data-action-type="success"
+                                data-action-title="Restore City"
+                                data-action-description="Restore “{{ $city->name }}” and return it to the active cities."
+                                data-action-icon="fa-solid fa-rotate-left"
+                                data-action-confirm-icon="fa-solid fa-rotate-left"
+                                data-action-confirm-text="Restore City"
+                            >
                                 <i class="fa-solid fa-rotate-left"></i>
-                                Restore
+
+                                <span class="hidden lg:inline">Restore</span>
                             </button>
-                        </form>
+                        {{-- @endcan --}}
 
-                        <form method="POST"
-                              action="{{ route('admin.cities.force-delete', $city) }}"
-                              onsubmit="return confirm('Permanently delete this city? This cannot be undone.')">
-                            @csrf
-                            @method('DELETE')
-
-                            <button class="btn btn-error btn-outline btn-xs">
+                        {{-- @can('forceDelete', $city) --}}
+                            <button
+                                type="button"
+                                class="btn btn-error btn-sm btn-outline gap-2"
+                                title="Delete permanently"
+                                data-admin-action
+                                data-action-url="{{ route('admin.cities.force-delete', $city->slug) }}"
+                                data-action-method="DELETE"
+                                data-action-type="danger"
+                                data-action-title="Delete Platform City Permanently"
+                                data-action-description="Permanently delete “{{ $city->name }}”. This action cannot be undone."
+                                data-action-icon="fa-solid fa-triangle-exclamation"
+                                data-action-confirm-icon="fa-solid fa-trash-can"
+                                data-action-confirm-text="Delete Forever"
+                            >
                                 <i class="fa-solid fa-trash-can"></i>
-                                Delete
-                            </button>
-                        </form>
-                    </div>
 
+                                <span class="hidden lg:inline whitespace-nowrap">Delete Forever</span>
+                            </button>
+                        {{-- @endcan --}}
+                    </div>
                 </div>
             </div>
         @empty

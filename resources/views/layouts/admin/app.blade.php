@@ -85,16 +85,16 @@
 
             <main class="flex-1 bg-white">
                 @if(session('success'))
-                    <div class="cv-notice cv-notice--success mb-5">
-                        <i class="fa-solid fa-circle-check mt-0.5 text-sm"></i>
-                        <span class="text-sm">{{ session('success') }}</span>
+                    <div class="alert alert-success mb-5">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>{{ session('success') }}</span>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="cv-notice cv-notice--error mb-5">
-                        <i class="fa-solid fa-circle-exclamation mt-0.5 text-sm"></i>
-                        <span class="text-sm">{{ session('error') }}</span>
+                    <div class="alert alert-error mb-5">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>{{ session('error') }}</span>
                     </div>
                 @endif
 

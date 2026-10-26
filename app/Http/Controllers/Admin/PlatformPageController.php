@@ -112,7 +112,7 @@ class PlatformPageController extends Controller
             )
             ->count();
 
-        return view('admin.platform-pages.index', compact(
+        return view('admin.platform.platform-pages.index', compact(
             'pages',
             'platform',
             'platformSlug',
@@ -146,7 +146,7 @@ class PlatformPageController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.platform-pages.create', compact(
+        return view('admin.platform.platform-pages.create', compact(
             'platform',
             'platforms',
             'platformSlug',
@@ -194,7 +194,7 @@ class PlatformPageController extends Controller
 
         $platformPage->load(['platform:id,name,slug,official_name,logo,cover_image,icon,color,is_bangladesh_focused',]);
 
-        return view('admin.platform-pages.show', compact('platformPage'));
+        return view('admin.platform.platform-pages.show', compact('platformPage'));
     }
 
     public function edit(PlatformPage $platformPage): View
@@ -207,7 +207,7 @@ class PlatformPageController extends Controller
 
         $platform = $platformPage->platform;
 
-        return view('admin.platform-pages.edit', compact(
+        return view('admin.platform.platform-pages.edit', compact(
             'platform',
             'platformPage',
             'platforms'
@@ -287,31 +287,41 @@ class PlatformPageController extends Controller
     {
         $this->authorize('viewAny', PlatformPage::class);
 
-        $platforms = Platform::orderBy('name')
+        $search = trim($request->input('search', ''));
+        $platform = trim($request->input('platform', ''));
+        $type = trim($request->input('type', ''));
+        $accessType = trim($request->input('access_type', ''));
+        $deletedBy = trim($request->input('deleted_by', ''));
+        $deletedPeriod = trim($request->input('deleted_period', ''));
+
+        $platforms = Platform::query()
+            ->orderBy('name')
             ->get(['id', 'name']);
 
         $pageTypes = PlatformPage::onlyTrashed()
             ->whereNotNull('page_type')
+            ->where('page_type', '!=', '')
             ->distinct()
             ->orderBy('page_type')
             ->pluck('page_type');
 
-        $deletedByUsers = User::whereIn(
-            'id',
-            PlatformPage::onlyTrashed()
-                ->whereNotNull('deleted_by')
-                ->distinct()
-                ->pluck('deleted_by')
-        )->orderBy('name')->get(['id', 'name', 'role']);
+        $deletedByUsers = User::query()
+            ->whereIn(
+                'id',
+                PlatformPage::onlyTrashed()
+                    ->whereNotNull('deleted_by')
+                    ->distinct()
+                    ->pluck('deleted_by')
+            )
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
 
         $pages = PlatformPage::onlyTrashed()
             ->with([
                 'platform:id,name,slug,logo,icon,color',
                 'deletedBy:id,name,slug,role',
             ])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->input('search');
-
+            ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('slug', 'like', "%{$search}%")
@@ -320,20 +330,20 @@ class PlatformPageController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('platform'), function ($query) use ($request) {
-                $query->where('platform_id', $request->input('platform'));
+            ->when($platform, function ($query) use ($platform) {
+                $query->where('platform_id', $platform);
             })
-            ->when($request->filled('type'), function ($query) use ($request) {
-                $query->where('page_type', $request->input('type'));
+            ->when($type, function ($query) use ($type) {
+                $query->where('page_type', $type);
             })
-            ->when($request->filled('access_type'), function ($query) use ($request) {
-                $query->where('access_type', $request->input('access_type'));
+            ->when($accessType, function ($query) use ($accessType) {
+                $query->where('access_type', $accessType);
             })
-            ->when($request->filled('deleted_by'), function ($query) use ($request) {
-                $query->where('deleted_by', $request->input('deleted_by'));
+            ->when($deletedBy, function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
             })
-            ->when($request->filled('deleted_period'), function ($query) use ($request) {
-                match ($request->input('deleted_period')) {
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
                     'today' => $query->whereDate('deleted_at', today()),
 
                     'yesterday' => $query->whereDate(
@@ -371,11 +381,17 @@ class PlatformPageController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.platform-pages.trash', compact(
+        return view('admin.platform.platform-pages.trash', compact(
             'pages',
             'platforms',
             'pageTypes',
-            'deletedByUsers'
+            'deletedByUsers',
+            'search',
+            'platform',
+            'type',
+            'accessType',
+            'deletedBy',
+            'deletedPeriod',
         ));
     }
 

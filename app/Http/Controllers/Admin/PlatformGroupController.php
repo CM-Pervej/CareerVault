@@ -112,7 +112,7 @@ class PlatformGroupController extends Controller
             )
             ->count();
 
-        return view('admin.platform-groups.index', compact(
+        return view('admin.platform.platform-groups.index', compact(
             'groups',
             'platform',
             'platformSlug',
@@ -146,7 +146,7 @@ class PlatformGroupController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.platform-groups.create', compact(
+        return view('admin.platform.platform-groups.create', compact(
             'platform',
             'platforms',
             'platformSlug',
@@ -194,7 +194,7 @@ class PlatformGroupController extends Controller
 
         $platformGroup->load(['platform:id,name,slug,official_name,logo,cover_image,icon,color,is_bangladesh_focused',]);
 
-        return view('admin.platform-groups.show', compact('platformGroup'));
+        return view('admin.platform.platform-groups.show', compact('platformGroup'));
     }
 
     public function edit(PlatformGroup $platformGroup): View
@@ -207,7 +207,7 @@ class PlatformGroupController extends Controller
 
         $platform = $platformGroup->platform;
 
-        return view('admin.platform-groups.edit', compact(
+        return view('admin.platform.platform-groups.edit', compact(
             'platform',
             'platformGroup',
             'platforms'
@@ -287,31 +287,41 @@ class PlatformGroupController extends Controller
     {
         $this->authorize('viewAny', PlatformGroup::class);
 
-        $platforms = Platform::orderBy('name')
+        $search = trim($request->input('search', ''));
+        $platform = trim($request->input('platform', ''));
+        $type = trim($request->input('type', ''));
+        $accessType = trim($request->input('access_type', ''));
+        $deletedBy = trim($request->input('deleted_by', ''));
+        $deletedPeriod = trim($request->input('deleted_period', ''));
+
+        $platforms = Platform::query()
+            ->orderBy('name')
             ->get(['id', 'name']);
 
         $groupTypes = PlatformGroup::onlyTrashed()
             ->whereNotNull('group_type')
+            ->where('group_type', '!=', '')
             ->distinct()
             ->orderBy('group_type')
             ->pluck('group_type');
 
-        $deletedByUsers = User::whereIn(
-            'id',
-            PlatformGroup::onlyTrashed()
-                ->whereNotNull('deleted_by')
-                ->distinct()
-                ->pluck('deleted_by')
-        )->orderBy('name')->get(['id', 'name', 'role']);
+        $deletedByUsers = User::query()
+            ->whereIn(
+                'id',
+                PlatformGroup::onlyTrashed()
+                    ->whereNotNull('deleted_by')
+                    ->distinct()
+                    ->pluck('deleted_by')
+            )
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
 
         $groups = PlatformGroup::onlyTrashed()
             ->with([
                 'platform:id,name,slug,logo,icon,color',
                 'deletedBy:id,name,slug,role',
             ])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->input('search');
-
+            ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('slug', 'like', "%{$search}%")
@@ -320,20 +330,20 @@ class PlatformGroupController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('platform'), function ($query) use ($request) {
-                $query->where('platform_id', $request->input('platform'));
+            ->when($platform, function ($query) use ($platform) {
+                $query->where('platform_id', $platform);
             })
-            ->when($request->filled('type'), function ($query) use ($request) {
-                $query->where('group_type', $request->input('type'));
+            ->when($type, function ($query) use ($type) {
+                $query->where('group_type', $type);
             })
-            ->when($request->filled('access_type'), function ($query) use ($request) {
-                $query->where('access_type', $request->input('access_type'));
+            ->when($accessType, function ($query) use ($accessType) {
+                $query->where('access_type', $accessType);
             })
-            ->when($request->filled('deleted_by'), function ($query) use ($request) {
-                $query->where('deleted_by', $request->input('deleted_by'));
+            ->when($deletedBy, function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
             })
-            ->when($request->filled('deleted_period'), function ($query) use ($request) {
-                match ($request->input('deleted_period')) {
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
                     'today' => $query->whereDate('deleted_at', today()),
 
                     'yesterday' => $query->whereDate(
@@ -371,11 +381,17 @@ class PlatformGroupController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.platform-groups.trash', compact(
+        return view('admin.platform.platform-groups.trash', compact(
             'groups',
             'platforms',
             'groupTypes',
-            'deletedByUsers'
+            'deletedByUsers',
+            'search',
+            'platform',
+            'type',
+            'accessType',
+            'deletedBy',
+            'deletedPeriod',
         ));
     }
 

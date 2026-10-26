@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Country extends Model
@@ -40,19 +41,22 @@ class Country extends Model
         return $this->hasMany(State::class);
     }
 
-    public function companies()
+    public function cities()
     {
-        return $this->belongsToMany(Company::class);
+        return $this->hasMany(City::class);
+    }
+
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Company::class,
+            'company_country'
+        )->withTimestamps();
     }
 
     public function getRouteKeyName(): string
     {
         return 'slug';
-    }
-
-    public function cities()
-    {
-        return $this->hasMany(City::class);
     }
 
     public function createdBy()

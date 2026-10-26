@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\State;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StateController extends Controller
 {
-    public function index(Request $request, Country $country)
+    public function index(Request $request)
     {
-        $query = $country->states()
+        $query = State::query()
+            ->with('country')
             ->withCount('cities');
 
         if ($request->filled('search')) {
@@ -24,6 +26,12 @@ class StateController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('country')) {
+            $query->whereHas('country', function ($q) use ($request) {
+                $q->where('slug', $request->input('country'));
             });
         }
 
@@ -41,94 +49,89 @@ class StateController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $types = $country->states()
+        $countries = Country::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $types = State::query()
             ->whereNotNull('type')
+            ->where('type', '!=', '')
             ->distinct()
             ->orderBy('type')
             ->pluck('type');
+
+        $trashedStatesCount = State::onlyTrashed()->count();
 
         return view('admin.reference.states.index', compact(
-            'country',
             'states',
-            'types'
+            'countries',
+            'types',
+            'trashedStatesCount'
         ));
     }
 
-    public function create(Country $country)
+    public function create()
     {
-        $types = $country->states()
-            ->whereNotNull('type')
-            ->distinct()
-            ->orderBy('type')
-            ->pluck('type');
+        $countries = Country::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.reference.states.create', compact(
-            'country',
-            'types'
-        ));
+        return view('admin.reference.states.create', compact('countries'));
     }
 
-    public function store(Request $request, Country $country)
+    public function store(Request $request)
     {
-        $validated = $this->validateState($request, $country);
+        $validated = $this->validateState($request);
 
-        $validated['country_id'] = $country->id;
+        $country = Country::findOrFail($validated['country_id']);
+
         $validated['slug'] = $this->generateUniqueSlug(
             $validated['name'],
             $country
         );
+
         $validated['created_by'] = Auth::id();
 
         State::create($validated);
 
         return redirect()
-            ->route('admin.countries.states.index', $country)
-            ->with('success', 'State / division created successfully.');
+            ->route('admin.states.index')
+            ->with('success', 'State / Division created successfully.');
     }
 
-    public function show(Country $country, State $state)
+    public function show(State $state)
     {
-        $this->ensureCountryState($country, $state);
-
+        $state->load('country');
         $state->loadCount('cities');
 
-        return view('admin.reference.states.show', compact(
-            'country',
-            'state'
-        ));
+        return view('admin.reference.states.show', compact('state'));
     }
 
-    public function edit(Country $country, State $state)
+    public function edit(State $state)
     {
-        $this->ensureCountryState($country, $state);
-
-        $types = $country->states()
-            ->whereNotNull('type')
-            ->distinct()
-            ->orderBy('type')
-            ->pluck('type');
+        $countries = Country::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('admin.reference.states.edit', compact(
-            'country',
             'state',
-            'types'
+            'countries'
         ));
     }
 
-    public function update(
-        Request $request,
-        Country $country,
-        State $state
-    ) {
-        $this->ensureCountryState($country, $state);
+    public function update(Request $request, State $state)
+    {
+        $validated = $this->validateState($request, $state);
 
-        $validated = $this->validateState(
-            $request,
-            $country,
-            $state
-        );
+        $country = Country::findOrFail($validated['country_id']);
 
-        if ($validated['name'] !== $state->name) {
+        if (
+            $validated['name'] !== $state->name ||
+            $validated['country_id'] != $state->country_id
+        ) {
             $validated['slug'] = $this->generateUniqueSlug(
                 $validated['name'],
                 $country,
@@ -141,103 +144,129 @@ class StateController extends Controller
         $state->update($validated);
 
         return redirect()
-            ->route('admin.countries.states.index', $country)
-            ->with('success', 'State / division updated successfully.');
+            ->route('admin.states.index')
+            ->with('success', 'State / Division updated successfully.');
     }
 
-    public function destroy(Country $country, State $state)
+    public function destroy(State $state)
     {
-        $this->ensureCountryState($country, $state);
+        DB::transaction(function () use ($state) {
+            $userId = Auth::id();
 
-        if ($state->cities()->exists()) {
-            return back()->with(
-                'error',
-                'This state / division has cities. Remove or reassign them before deleting it.'
-            );
-        }
+            $state->cities()
+                ->whereNull('deleted_at')
+                ->update([
+                    'deleted_at' => now(),
+                    'deleted_by' => $userId,
+                ]);
 
-        $state->deleted_by = Auth::id();
-        $state->save();
-        $state->delete();
+            $state->deleted_by = $userId;
+            $state->save();
+            $state->delete();
+        });
 
         return redirect()
-            ->route('admin.countries.states.index', $country)
-            ->with('success', 'State / division moved to trash.');
+            ->route('admin.states.index')
+            ->with('success', 'State / Division and its cities moved to trash.');
     }
 
-    public function trash(Country $country)
+    public function trash()
     {
-        $states = $country->states()
-            ->onlyTrashed()
+        $states = State::onlyTrashed()
+            ->with('country')
+            ->withCount([
+                'cities' => function ($query) {
+                    $query->withTrashed();
+                },
+            ])
             ->orderByDesc('deleted_at')
             ->paginate(20);
 
-        return view('admin.reference.states.trash', compact(
-            'country',
-            'states'
-        ));
+        return view('admin.reference.states.trash', compact('states'));
     }
 
-    public function restore(Country $country, State $state)
+    public function restore(State $state)
     {
-        $this->ensureCountryState($country, $state, true);
-
-        $state->restore();
-
-        $state->deleted_by = null;
-        $state->save();
-
-        return redirect()
-            ->route('admin.countries.states.trash', $country)
-            ->with('success', 'State / division restored successfully.');
-    }
-
-    public function forceDelete(Country $country, State $state)
-    {
-        $this->ensureCountryState($country, $state, true);
-
-        if ($state->cities()->withTrashed()->exists()) {
-            return back()->with(
-                'error',
-                'This state / division still has cities and cannot be permanently deleted.'
-            );
+        if (State::where('country_id', $state->country_id)
+            ->where('slug', $state->slug)
+            ->where('id', '!=', $state->id)
+            ->exists()) {
+            return redirect()
+                ->route('admin.states.trash')
+                ->with('error', 'This State / Division cannot be restored because its slug is already in use.');
         }
 
-        $state->forceDelete();
+        DB::transaction(function () use ($state) {
+            $state->restore();
+            $state->update(['deleted_by' => null]);
+
+            $state->cities()
+                ->onlyTrashed()
+                ->update([
+                    'deleted_at' => null,
+                    'deleted_by' => null,
+                ]);
+        });
 
         return redirect()
-            ->route('admin.countries.states.trash', $country)
-            ->with('success', 'State / division permanently deleted.');
+            ->route('admin.states.trash')
+            ->with('success', 'State / Division and its cities restored successfully.');
+    }
+
+    public function forceDelete(State $state)
+    {
+        DB::transaction(function () use ($state) {
+            $state->cities()->withTrashed()->forceDelete();
+
+            $state->forceDelete();
+        });
+
+        return redirect()
+            ->route('admin.states.trash')
+            ->with('success', 'State / Division and its cities permanently deleted.');
     }
 
     private function validateState(
         Request $request,
-        Country $country,
         ?State $state = null
     ): array {
         return $request->validate([
+            'country_id' => [
+                'required',
+                'integer',
+                'exists:countries,id',
+            ],
+
             'name' => [
                 'required',
                 'string',
                 'max:100',
                 Rule::unique('states', 'name')
-                    ->where(fn ($query) => $query->where('country_id', $country->id))
+                    ->where(function ($query) use ($request) {
+                        return $query
+                            ->where('country_id', $request->input('country_id'))
+                            ->whereNull('deleted_at');
+                    })
                     ->ignore($state?->id),
             ],
+
             'code' => [
                 'nullable',
                 'string',
                 'max:20',
             ],
+
             'type' => [
                 'nullable',
                 'string',
                 'max:50',
             ],
+
             'is_active' => [
                 'nullable',
                 'boolean',
             ],
+
             'sort_order' => [
                 'nullable',
                 'integer',
@@ -270,20 +299,5 @@ class StateController extends Controller
         }
 
         return $slug;
-    }
-
-    private function ensureCountryState(
-        Country $country,
-        State $state,
-        bool $withTrashed = false
-    ): void {
-        $query = $withTrashed
-            ? $country->states()->withTrashed()
-            : $country->states();
-
-        abort_unless(
-            $query->whereKey($state->id)->exists(),
-            404
-        );
     }
 }

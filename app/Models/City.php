@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\CompanyCity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class City extends Model
@@ -32,19 +34,19 @@ class City extends Model
         ];
     }
 
-    public function companies()
-    {
-        return $this->belongsToMany(Company::class);
-    }
-
     public function country()
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(Country::class)->withTrashed();
     }
 
     public function state()
     {
-        return $this->belongsTo(State::class);
+        return $this->belongsTo(State::class)->withTrashed();
+    }
+
+    public function companyPlaces(): HasMany
+    {
+        return $this->hasMany(CompanyCity::class);
     }
 
     public function createdBy()

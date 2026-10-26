@@ -16,7 +16,17 @@
     $referenceDataActive = request()->routeIs(
         'admin.countries.*',
         'admin.cities.*',
-        'admin.industries.*'
+        'admin.industries.*',
+        'admin.states.*',
+        'admin.technology.*'
+    );
+
+    $companiesActive = request()->routeIs(
+        'admin.companies.*',
+        'admin.company-sizes.*',
+        'admin.company-types.*',
+        'admin.ownership-types.*',
+        'admin.business-models.*'
     );
 
     $peopleActive = request()->routeIs('admin.users.*');
@@ -142,10 +152,62 @@
                 </div>
             </div>
 
-            {{-- Companies --}}
+            {{-- ------------------------------------------------------
+                                Companies
+            ------------------------------------------------------- --}}
+            <div
+                x-data="{ open: {{ $companiesActive ? 'true' : 'false' }}, pinned: {{ $companiesActive ? 'true' : 'false' }} }"
+                class="mb-1"
+                @mouseenter="open = true" @mouseleave="open = pinned" @focusin="open = true"
+                @focusout="if (!$event.currentTarget.contains($event.relatedTarget)) open = pinned"
+            >
+                <div class="flex items-center rounded-lg {{ $companiesActive ? 'cv-nav-link--active' : '' }}">
+                    <a href="{{ route('admin.companies.index') }}" class="cv-nav-link min-w-0 flex-1 !rounded-r-none">
+                        <span class="flex w-5 shrink-0 justify-center"><i class="fa-solid fa-layer-group text-xs"></i></span>
+                        <span class="truncate">Companies</span>
+                    </a>
+
+                    <button type="button" @click="pinned = !pinned; open = pinned" class="mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/35 transition hover:bg-white/10 hover:text-white" :aria-expanded="open" aria-label="Toggle platform navigation">
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" :class="{'rotate-180': open}"></i>
+                    </button>
+                </div>
+
+                <div class="cv-submenu"
+                    x-cloak x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
+                    <a href="{{ route('admin.company-sizes.index') }}" class="cv-subnav-link {{ request()->routeIs('admin.company-sizes.*') ? 'cv-subnav-link--active' : '' }}">
+                        <span class="flex w-4 justify-center"><i class="fa-solid fa-link text-[11px]"></i></span>
+                        <span>Company Size</span>
+                    </a>
+
+                    @if(Route::has('admin.company-types.index'))
+                        <a href="{{ route('admin.company-types.index') }}" class="cv-subnav-link {{ request()->routeIs('admin.company-types.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center"><i class="fa-solid fa-file-lines text-[11px]"></i></span>
+                            <span>Company Type</span>
+                        </a>
+                    @endif
+
+                    @if(Route::has('admin.ownership-types.index'))
+                        <a href="{{ route('admin.ownership-types.index') }}" class="cv-subnav-link {{ request()->routeIs('admin.ownership-types.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center"><i class="fa-solid fa-user-group text-[11px]"></i></span>
+                            <span>Ownership Type</span>
+                        </a>
+                    @endif
+
+                    @if(Route::has('admin.business-models.index'))
+                        <a href="{{ route('admin.business-models.index') }}" class="cv-subnav-link {{ request()->routeIs('admin.business-models.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center"><i class="fa-solid fa-comments text-[11px]"></i></span>
+                            <span>Business Model</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Govt. Jobs --}}
             <a href="#" class="cv-nav-link mb-1">
                 <span class="flex w-5 justify-center"><i class="fa-solid fa-building text-xs"></i></span>
-                <span>Companies</span>
+                <span>Govt. Jobs</span>
             </a>
 
             {{-- Locations --}}
@@ -178,57 +240,66 @@
                     </button>
                 </div>
 
-<div class="cv-submenu"
-    x-cloak
-    x-show="open"
-    x-transition:enter="transition ease-out duration-150"
-    x-transition:enter-start="opacity-0 -translate-y-1"
-    x-transition:enter-end="opacity-100 translate-y-0"
-    x-transition:leave="transition ease-in duration-100"
-    x-transition:leave-start="opacity-100 translate-y-0"
-    x-transition:leave-end="opacity-0 translate-y-1">
+                <div class="cv-submenu"
+                    x-cloak
+                    x-show="open"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 translate-y-1">
 
-    @if(Route::has('admin.industries.index'))
-        <a href="{{ route('admin.industries.index') }}"
-           class="cv-subnav-link {{ request()->routeIs('admin.industries.*') ? 'cv-subnav-link--active' : '' }}">
-            <span class="flex w-4 justify-center">
-                <i class="fa-solid fa-layer-group text-[11px]"></i>
-            </span>
-            <span>Industries</span>
-        </a>
-    @endif
+                    @if(Route::has('admin.industries.index'))
+                        <a href="{{ route('admin.industries.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.industries.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-layer-group text-[11px]"></i>
+                            </span>
+                            <span>Industries</span>
+                        </a>
+                    @endif
 
-    @if(Route::has('admin.countries.index'))
-        <a href="{{ route('admin.countries.index') }}"
-           class="cv-subnav-link {{ request()->routeIs('admin.countries.*') ? 'cv-subnav-link--active' : '' }}">
-            <span class="flex w-4 justify-center">
-                <i class="fa-solid fa-earth-asia text-[11px]"></i>
-            </span>
-            <span>Countries</span>
-        </a>
-    @endif
+                    @if(Route::has('admin.countries.index'))
+                        <a href="{{ route('admin.countries.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.countries.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-earth-asia text-[11px]"></i>
+                            </span>
+                            <span>Countries</span>
+                        </a>
+                    @endif
 
-    @if(Route::has('admin.countries.states.index'))
-        <a href="{{ route('admin.countries.states.index', ['country' => 'bangladesh']) }}"
-           class="cv-subnav-link {{ request()->routeIs('admin.countries.states.*') ? 'cv-subnav-link--active' : '' }}">
-            <span class="flex w-4 justify-center">
-                <i class="fa-solid fa-map-location-dot text-[11px]"></i>
-            </span>
-            <span>States / Divisions</span>
-        </a>
-    @endif
+                    @if(Route::has('admin.states.index'))
+                        <a href="{{ route('admin.states.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.states.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-map-location-dot text-[11px]"></i>
+                            </span>
+                            <span>States / Divisions</span>
+                        </a>
+                    @endif
 
-    @if(Route::has('admin.cities.index'))
-        <a href="{{ route('admin.cities.index') }}"
-           class="cv-subnav-link {{ request()->routeIs('admin.cities.*') ? 'cv-subnav-link--active' : '' }}">
-            <span class="flex w-4 justify-center">
-                <i class="fa-solid fa-city text-[11px]"></i>
-            </span>
-            <span>Cities</span>
-        </a>
-    @endif
+                    @if(Route::has('admin.cities.index'))
+                        <a href="{{ route('admin.cities.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.cities.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-city text-[11px]"></i>
+                            </span>
+                            <span>Cities</span>
+                        </a>
+                    @endif
 
-</div>
+                    @if(Route::has('admin.technology.index'))
+                        <a href="{{ route('admin.technology.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.technology.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-city text-[11px]"></i>
+                            </span>
+                            <span>technology</span>
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
 

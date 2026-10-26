@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // import './bootstrap';
 
 import './admin/components/lock';
+import './admin/platform-linked-cards.js';
 import initCompany from './company';
 import './city';
 import initPlatform from './platform';

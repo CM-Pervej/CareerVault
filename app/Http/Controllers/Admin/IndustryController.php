@@ -11,36 +11,36 @@ use Illuminate\Validation\Rule;
 
 class IndustryController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = Industry::query()
+        $search = trim(request()->input('search', ''));
+        $parent = trim(request()->input('parent', ''));
+        $status = request()->input('status');
+
+        // Industries
+        $industries = Industry::query()
             ->with('parent')
-            ->withCount('children');
-
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('parent')) {
-            $query->where('parent_id', $request->input('parent'));
-        }
-
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->input('status'));
-        }
-
-        $industries = $query
+            ->withCount('children')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($parent !== '', function ($query) use ($parent) {
+                $query->where('parent_id', $parent);
+            })
+            ->when($status !== null && $status !== '', function ($query) use ($status) {
+                $query->where('is_active', $status === 'active');
+            })
             ->orderByRaw('parent_id IS NOT NULL')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
+        // Parent Industries
         $parents = Industry::query()
             ->whereNull('parent_id')
             ->where('is_active', true)
@@ -48,9 +48,55 @@ class IndustryController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Summary Statistics
+        $stats = Industry::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(is_active = 1) as active')
+            ->selectRaw('SUM(is_active = 0) as inactive')
+            ->selectRaw('SUM(parent_id IS NULL) as parents')
+            ->selectRaw('SUM(parent_id IS NOT NULL) as sub_industries')
+            ->first();
+
+        $totalIndustries = (int) $stats->total;
+        $activeIndustries = (int) $stats->active;
+        $inactiveIndustries = (int) $stats->inactive;
+        $parentIndustries = (int) $stats->parents;
+        $subIndustries = (int) $stats->sub_industries;
+
+        $industriesWithChildren = Industry::query()
+            ->has('children')
+            ->count();
+
+        $leafIndustries = Industry::query()
+            ->doesntHave('children')
+            ->count();
+
+        $recentlyAdded = Industry::query()
+            ->where('created_at', '>=', now()->subDays(30))
+            ->count();
+
+        $recentlyUpdated = Industry::query()
+            ->where('updated_at', '>=', now()->subDays(30))
+            ->count();
+
+        $trashedIndustries = Industry::onlyTrashed()->count();
+
         return view('admin.reference.industries.index', compact(
             'industries',
-            'parents'
+            'parents',
+            'search',
+            'parent',
+            'status',
+            'totalIndustries',
+            'activeIndustries',
+            'inactiveIndustries',
+            'parentIndustries',
+            'subIndustries',
+            'industriesWithChildren',
+            'leafIndustries',
+            'recentlyAdded',
+            'recentlyUpdated',
+            'trashedIndustries',
         ));
     }
 
@@ -83,7 +129,7 @@ class IndustryController extends Controller
     public function show(Industry $industry)
     {
         $industry->load([
-            'parent',
+            'parent' => fn ($query) => $query->withTrashed(),
             'children' => fn ($query) => $query
                 ->orderBy('sort_order')
                 ->orderBy('name'),
@@ -154,12 +200,148 @@ class IndustryController extends Controller
 
     public function trash()
     {
-        $industries = Industry::onlyTrashed()
-            ->with('parent')
-            ->orderByDesc('deleted_at')
-            ->paginate(20);
+        $search = trim(request()->input('search', ''));
+        $parent = trim(request()->input('parent', ''));
+        $deletedBy = trim(request()->input('deleted_by', ''));
+        $deletedPeriod = trim(request()->input('deleted_period', ''));
 
-        return view('admin.reference.industries.trash', compact('industries'));
+        // Trashed Industries
+        $industries = Industry::onlyTrashed()
+            ->with([
+                'parent' => fn ($query) => $query->withTrashed(),
+                'deletedBy:id,name,slug,role',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($parent !== '', function ($query) use ($parent) {
+                $query->where('parent_id', $parent);
+            })
+            ->when($deletedBy !== '', function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
+            })
+            ->when($deletedPeriod !== '', function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
+                    'today' => $query->whereDate('deleted_at', today()),
+
+                    'yesterday' => $query->whereDate(
+                        'deleted_at',
+                        today()->subDay()
+                    ),
+
+                    'last_7_days' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subDays(7)
+                    ),
+
+                    'last_30_days' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subDays(30)
+                    ),
+
+                    'last_3_months' => $query->where(
+                        'deleted_at',
+                        '>=',
+                        now()->subMonths(3)
+                    ),
+
+                    'this_year' => $query->whereYear(
+                        'deleted_at',
+                        now()->year
+                    ),
+
+                    default => null,
+                };
+            })
+            ->orderByDesc('deleted_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Parent Industries
+        $parents = Industry::withTrashed()
+            ->whereNull('parent_id')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Users Who Deleted Industries
+        $deletedByUsers = \App\Models\User::query()
+            ->whereIn(
+                'id',
+                Industry::onlyTrashed()
+                    ->whereNotNull('deleted_by')
+                    ->distinct()
+                    ->pluck('deleted_by')
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'slug',
+                'role',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Summary Statistics
+        |--------------------------------------------------------------------------
+        */
+
+        $trashedIndustries = Industry::onlyTrashed()->count();
+
+        $recentlyDeleted = Industry::onlyTrashed()
+            ->where('deleted_at', '>=', now()->subDays(30))
+            ->count();
+
+        $deletedToday = Industry::onlyTrashed()
+            ->whereDate('deleted_at', today())
+            ->count();
+
+        $deletedThisMonth = Industry::onlyTrashed()
+            ->whereYear('deleted_at', now()->year)
+            ->whereMonth('deleted_at', now()->month)
+            ->count();
+
+        $deletedThisYear = Industry::onlyTrashed()
+            ->whereYear('deleted_at', now()->year)
+            ->count();
+
+        $trashedWithParent = Industry::onlyTrashed()
+            ->whereNotNull('parent_id')
+            ->count();
+
+        $trashedTopLevel = Industry::onlyTrashed()
+            ->whereNull('parent_id')
+            ->count();
+
+        $deletedByUsersCount = Industry::onlyTrashed()
+            ->whereNotNull('deleted_by')
+            ->distinct('deleted_by')
+            ->count('deleted_by');
+
+        return view('admin.reference.industries.trash', compact(
+            'industries',
+            'parents',
+            'deletedByUsers',
+            'search',
+            'parent',
+            'deletedBy',
+            'deletedPeriod',
+            'trashedIndustries',
+            'recentlyDeleted',
+            'deletedToday',
+            'deletedThisMonth',
+            'deletedThisYear',
+            'trashedWithParent',
+            'trashedTopLevel',
+            'deletedByUsersCount',
+        ));
     }
 
     public function restore(Industry $industry)

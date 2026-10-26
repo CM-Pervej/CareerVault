@@ -1,53 +1,22 @@
 @extends('layouts.admin.app')
 
 @section('content')
-<div class="space-y-6">
-
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-            <div class="breadcrumbs text-sm">
-                <ul>
-                    <li>Reference</li>
-                    <li>Cities</li>
-                </ul>
-            </div>
-
-            <h1 class="mt-1 text-2xl font-bold">Cities</h1>
-            <p class="text-sm text-base-content/60">
-                Manage cities and their geographic relationships.
-            </p>
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.cities.trash') }}" class="btn btn-ghost btn-sm">
-                <i class="fa-solid fa-trash-can"></i>
-                Trash
-            </a>
-
-            <a href="{{ route('admin.cities.create') }}" class="btn btn-primary btn-sm">
-                <i class="fa-solid fa-plus"></i>
-                Add City
-            </a>
-        </div>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-error">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
+<div class="space-y-3 p-4 sm:p-6">
+    {{-- Header --}}
+    <x-admin.ui.page-header
+        title="Cities"
+        title-color="text-primary"
+        title-bg-color="bg-primary/10 text-primary"
+        description="Manage cities and their geographic relationships."
+        icon="fa-solid fa-map"
+        :create-route="route('admin.cities.create')"
+        create-text="Add City"
+        :trash-route="route('admin.cities.trash')"
+        {{-- :trash-count="$trashedStatesCount" --}}
+    />
 
     <div class="card border border-base-300 bg-base-100 shadow-sm">
         <div class="card-body p-4">
-
             <form method="GET" class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
 
                 <input type="text"
@@ -119,12 +88,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>City</th>
-                    <th>Country</th>
-                    <th>State / Division</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th class="text-right">Actions</th>
+                    <th>City</th> <th>Country</th> <th>State / Division</th> <th>Type</th> <th>Status</th> <th class="text-right">Actions</th>
                 </tr>
             </thead>
 
@@ -141,24 +105,17 @@
                             </div>
                         </td>
 
-                        <td>
-                            {{ $city->country?->name ?? '—' }}
-                        </td>
+                        <td> {{ $city->country?->name ?? '—' }} </td>
 
-                        <td>
-                            {{ $city->state?->name ?? '—' }}
-                        </td>
+                        <td> {{ $city->state?->name ?? '—' }} </td>
 
                         <td>
                             @if($city->is_capital)
                                 <span class="badge badge-warning badge-sm">
-                                    <i class="fa-solid fa-star mr-1 text-[9px]"></i>
-                                    Capital
+                                    <i class="fa-solid fa-star mr-1 text-[9px]"></i> Capital
                                 </span>
                             @else
-                                <span class="text-sm text-base-content/60">
-                                    City
-                                </span>
+                                <span class="text-sm text-base-content/60">City</span>
                             @endif
                         </td>
 
@@ -170,32 +127,55 @@
                             @endif
                         </td>
 
-                        <td>
-                            <div class="flex justify-end gap-1">
-                                <a href="{{ route('admin.cities.show', $city) }}"
-                                   class="btn btn-ghost btn-xs"
-                                   title="View">
-                                    <i class="fa-solid fa-eye"></i>
+                        <td class="text-right">
+                            <div class="hidden sm:flex shrink-0 items-center gap-2 xl:justify-end">
+                                <a href="{{ route('admin.cities.show', $city) }}" class="btn btn-sm btn-outline gap-2">
+                                    <i class="fa-solid fa-eye"></i> View
                                 </a>
 
-                                <a href="{{ route('admin.cities.edit', $city) }}"
-                                   class="btn btn-ghost btn-xs"
-                                   title="Edit">
-                                    <i class="fa-solid fa-pen"></i>
-                                </a>
-
-                                <form method="POST"
-                                      action="{{ route('admin.cities.destroy', $city) }}"
-                                      onsubmit="return confirm('Move this city to trash?')">
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            class="btn btn-ghost btn-xs text-error"
-                                            title="Delete">
-                                        <i class="fa-solid fa-trash"></i>
+                                <div class="dropdown dropdown-center dropdown-left">
+                                    <button tabindex="0" class="btn btn-sm btn-ghost btn-square" aria-label="Page actions">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
                                     </button>
-                                </form>
+
+                                    <ul tabindex="0" class="dropdown-content menu z-30 mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-xl">
+                                        <li>
+                                            <a href="{{ route('admin.cities.show', $city) }}">
+                                                <i class="fa-solid fa-eye"></i> View city
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="{{ route('admin.cities.edit', $city) }}">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit city
+                                            </a>
+                                        </li>
+
+                                        <li class="menu-title mt-1 px-3 py-1 text-[10px] uppercase tracking-wider">
+                                            <span>Danger zone</span>
+                                        </li>
+
+                                        <li>
+                                            <button
+                                                type="button"
+                                                class="text-error flex items-center gap-2 hover:bg-error/10"
+                                                title="Move city to trash"
+                                                data-admin-action
+                                                data-action-url="{{ route('admin.cities.destroy',$city->slug) }}"
+                                                data-action-method="DELETE"
+                                                data-action-type="danger"
+                                                data-action-title="Move City to Trash"
+                                                data-action-description="Move <strong>“{{ $city->name }}”</strong> to trash. You can restore it later from the Trash state."
+                                                data-action-icon="fa-solid fa-trash-can"
+                                                data-action-confirm-icon="fa-solid fa-trash-can"
+                                                data-action-confirm-text="Move to Trash"
+                                            >
+                                                <i class="fa-solid fa-trash-can"></i>
+                                                <span> Move to Trash</span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -204,9 +184,7 @@
                         <td colspan="6" class="py-12 text-center">
                             <i class="fa-solid fa-city mb-3 text-3xl text-base-content/30"></i>
                             <div class="font-semibold">No cities found</div>
-                            <div class="text-sm text-base-content/50">
-                                Try changing your filters or add a new city.
-                            </div>
+                            <div class="text-sm text-base-content/50">Try changing your filters or add a new city.</div>
                         </td>
                     </tr>
                 @endforelse
@@ -218,13 +196,10 @@
         @forelse($cities as $city)
             <div class="card border border-base-300 bg-base-100 shadow-sm">
                 <div class="card-body p-4">
-
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <h3 class="font-bold">{{ $city->name }}</h3>
-                            <p class="text-xs text-base-content/50">
-                                {{ $city->slug }}
-                            </p>
+                            <h3 class="font-bold"> {{ $city->name }} </h3>
+                            <p class="text-xs text-base-content/50"> {{ $city->slug }} </p>
                         </div>
 
                         @if($city->is_active)
@@ -236,48 +211,48 @@
 
                     <div class="mt-2 space-y-1 text-sm">
                         <div>
-                            <span class="text-base-content/50">Country:</span>
-                            {{ $city->country?->name ?? '—' }}
+                            <span class="text-base-content/50">Country:</span> {{ $city->country?->name ?? '—' }}
                         </div>
 
                         <div>
-                            <span class="text-base-content/50">State:</span>
-                            {{ $city->state?->name ?? '—' }}
+                            <span class="text-base-content/50">State:</span> {{ $city->state?->name ?? '—' }}
                         </div>
 
                         @if($city->is_capital)
                             <div>
                                 <span class="badge badge-warning badge-sm">
-                                    <i class="fa-solid fa-star mr-1 text-[9px]"></i>
-                                    Capital
+                                    <i class="fa-solid fa-star mr-1 text-[9px]"></i> Capital
                                 </span>
                             </div>
                         @endif
                     </div>
 
-                    <div class="mt-3 flex justify-end gap-1">
-                        <a href="{{ route('admin.cities.show', $city) }}"
-                           class="btn btn-ghost btn-xs">
-                            <i class="fa-solid fa-eye"></i>
+                    <div class="mt-3 flex justify-around">
+                        <a href="{{ route('admin.cities.show', $city) }}">
+                            <i class="fa-solid fa-eye mr-2"></i> View city
                         </a>
 
-                        <a href="{{ route('admin.cities.edit', $city) }}"
-                           class="btn btn-ghost btn-xs">
-                            <i class="fa-solid fa-pen"></i>
+                        <a href="{{ route('admin.cities.edit', $city) }}">
+                            <i class="fa-solid fa-pen-to-square mr-2"></i> Edit city
                         </a>
 
-                        <form method="POST"
-                              action="{{ route('admin.cities.destroy', $city) }}"
-                              onsubmit="return confirm('Move this city to trash?')">
-                            @csrf
-                            @method('DELETE')
-
-                            <button class="btn btn-ghost btn-xs text-error">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
+                        <button
+                            type="button"
+                            class="text-error flex items-center gap-2 hover:bg-error/10"
+                            title="Move city to trash"
+                            data-admin-action
+                            data-action-url="{{ route('admin.cities.destroy',$city->slug) }}"
+                            data-action-method="DELETE"
+                            data-action-type="danger"
+                            data-action-title="Move City to Trash"
+                            data-action-description="Move <strong>“{{ $city->name }}”</strong> to trash. You can restore it later from the Trash state."
+                            data-action-icon="fa-solid fa-trash-can"
+                            data-action-confirm-icon="fa-solid fa-trash-can"
+                            data-action-confirm-text="Move to Trash"
+                        >
+                            <i class="fa-solid fa-trash-can"></i> Trash
+                        </button>
                     </div>
-
                 </div>
             </div>
         @empty
@@ -293,6 +268,5 @@
             {{ $cities->links() }}
         </div>
     @endif
-
 </div>
 @endsection

@@ -1,7 +1,10 @@
 @extends('layouts.admin.app')
 
+@section('title',$city->name)
+@section('page_title','City / '.$city->name)
+
 @section('content')
-<div class="mx-auto max-w-5xl space-y-6">
+<div class="space-y-3 p-4 sm:p-6">
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

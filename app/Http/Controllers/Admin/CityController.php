@@ -201,6 +201,18 @@ class CityController extends Controller
 
     public function restore(City $city)
     {
+        if ($city->country()->withTrashed()->first()?->trashed()) {
+            return redirect()
+                ->route('admin.cities.trash')
+                ->with('error', 'Restore the country before restoring this city.');
+        }
+
+        if ($city->state()->withTrashed()->first()?->trashed()) {
+            return redirect()
+                ->route('admin.cities.trash')
+                ->with('error', 'Restore the state before restoring this city.');
+        }
+
         $city->restore();
 
         $city->deleted_by = null;

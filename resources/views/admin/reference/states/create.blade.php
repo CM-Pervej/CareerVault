@@ -1,66 +1,46 @@
 @extends('layouts.admin.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+<div class="max-w-5xl mx-auto space-y-6">
 
-        <div>
-            <div class="breadcrumbs text-sm opacity-60">
-                <ul>
-                    <li>
-                        <a href="{{ route('admin.countries.index') }}">
-                            Countries
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.countries.show', $country) }}">
-                            {{ $country->name }}
-                        </a>
-                    </li>
-                    <li>States</li>
-                    <li>Create</li>
-                </ul>
-            </div>
+<x-admin.reference.page-header
+    title="Add State / Division"
+    description="Create a new administrative division."
+    icon="fa-solid fa-map"
+    :back-route="route('admin.states.index')"
+/>
 
-            <h1 class="text-2xl font-bold mt-2">
-                Add State / Division
-            </h1>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
 
-            <p class="text-sm opacity-60 mt-1">
-                Add an administrative subdivision of {{ $country->name }}.
-            </p>
+            <form
+                method="POST"
+                action="{{ route('admin.states.store') }}"
+                class="space-y-6"
+            >
+                @csrf
+
+                @include('admin.reference.states._form')
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-base-300">
+                    <a
+                        href="{{ route('admin.states.index') }}"
+                        class="btn btn-ghost"
+                    >
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Create State / Division
+                    </button>
+                </div>
+            </form>
+
         </div>
-
-        <a
-            href="{{ route('admin.countries.states.index', $country) }}"
-            class="btn btn-ghost"
-        >
-            <i class="fa-solid fa-arrow-left"></i>
-            Back
-        </a>
-
     </div>
 
-    <form method="POST" action="{{ route('admin.countries.states.store', $country) }}">
-        @csrf
-
-        @include('admin.reference.states._form')
-
-        <div class="flex justify-end gap-2 mt-6">
-            <a
-                href="{{ route('admin.countries.states.index', $country) }}"
-                class="btn btn-ghost"
-            >
-                Cancel
-            </a>
-
-            <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i>
-                Create State
-            </button>
-        </div>
-    </form>
-
 </div>
+
 @endsection
