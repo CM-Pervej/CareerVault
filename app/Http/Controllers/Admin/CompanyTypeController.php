@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CompanyTypeRequest;
 use App\Models\CompanyType;
+use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,46 +18,45 @@ class CompanyTypeController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = CompanyType::query()
+        $this->authorize('viewAny', CompanyType::class);
+
+        $search = trim($request->input('search', ''));
+        $status = $request->input('status');
+
+        $companyTypes = CompanyType::query()
             ->with([
                 'createdBy:id,name',
                 'updatedBy:id,name',
-            ]);
-
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where(
-                'is_active',
-                $request->status === 'active'
-            );
-        }
-
-        $companyTypes = (clone $query)
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($status !== null && $status !== '', function ($query) use ($status) {
+                $query->where('is_active', $status === 'active');
+            })
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
+        // Summary Statistics
         $totalCompanyTypes = CompanyType::count();
         $activeCompanyTypes = CompanyType::where('is_active', true)->count();
         $inactiveCompanyTypes = CompanyType::where('is_active', false)->count();
-        $trashedCompanyTypesCount = CompanyType::onlyTrashed()->count();
+        $trashedCompanyTypes = CompanyType::onlyTrashed()->count();
 
         return view('admin.company.company-type.index', compact(
             'companyTypes',
+            'search',
+            'status',
             'totalCompanyTypes',
             'activeCompanyTypes',
             'inactiveCompanyTypes',
-            'trashedCompanyTypesCount'
+            'trashedCompanyTypes',
         ));
     }
 

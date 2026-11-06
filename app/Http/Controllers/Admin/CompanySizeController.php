@@ -18,61 +18,51 @@ class CompanySizeController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Display all company sizes.
-     */
     public function index(Request $request): View
     {
         $this->authorize('viewAny', CompanySize::class);
 
-        $search = $request->input('search');
+        $search = trim($request->input('search', ''));
         $status = $request->input('status');
 
-        $query = CompanySize::query()
+        $companySizes = CompanySize::query()
             ->with([
                 'createdBy:id,name',
                 'updatedBy:id,name',
-            ]);
-            // ->withCount('companies');
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($status === 'active') {
-            $query->where('is_active', true);
-        } elseif ($status === 'inactive') {
-            $query->where('is_active', false);
-        }
-
-        $companySizes = $query
+            ])
+            // ->withCount('companies')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($status !== null && $status !== '', function ($query) use ($status) {
+                $query->where('is_active', $status === 'active');
+            })
             ->orderBy('sort_order')
             ->orderBy('min_employees')
             ->paginate(20)
             ->withQueryString();
 
-        $stats = [
-            'totalCompanySizes' => CompanySize::count(),
-            'activeCompanySizes' => CompanySize::where('is_active', true)->count(),
-            'inactiveCompanySizes' => CompanySize::where('is_active', false)->count(),
-            'trashedCompanySizes' => CompanySize::onlyTrashed()->count(),
-        ];
+        // Summary Statistics
+        $totalCompanySizes = CompanySize::count();
+        $activeCompanySizes = CompanySize::where('is_active', true)->count();
+        $inactiveCompanySizes = CompanySize::where('is_active', false)->count();
+        $trashedCompanySizes = CompanySize::onlyTrashed()->count();
 
         return view('admin.company.company-size.index', compact(
             'companySizes',
             'search',
             'status',
-            'stats'
+            'totalCompanySizes',
+            'activeCompanySizes',
+            'inactiveCompanySizes',
+            'trashedCompanySizes',
         ));
     }
 
-    /**
-     * Show the create form.
-     */
     public function create(): View
     {
         $this->authorize('create', CompanySize::class);
@@ -80,9 +70,6 @@ class CompanySizeController extends Controller
         return view('admin.company.company-size.create');
     }
 
-    /**
-     * Store a new company size.
-     */
     public function store(CompanySizeRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -96,14 +83,9 @@ class CompanySizeController extends Controller
             ]);
         });
 
-        return redirect()
-            ->route('admin.company-sizes.index')
-            ->with('success', 'Company size created successfully.');
+        return redirect()->route('admin.company-sizes.index')->with('success', 'Company size created successfully.');
     }
 
-    /**
-     * Display a company size.
-     */
     public function show(CompanySize $companySize): View
     {
         $this->authorize('view', $companySize);
@@ -113,30 +95,18 @@ class CompanySizeController extends Controller
             'updatedBy:id,name',
         ]);
 
-        return view('admin.company.company-size.show', compact(
-            'companySize'
-        ));
+        return view('admin.company.company-size.show', compact('companySize'));
     }
 
-    /**
-     * Show the edit form.
-     */
     public function edit(CompanySize $companySize): View
     {
         $this->authorize('update', $companySize);
 
-        return view('admin.company.company-size.edit', compact(
-            'companySize'
-        ));
+        return view('admin.company.company-size.edit', compact('companySize'));
     }
 
-    /**
-     * Update a company size.
-     */
-    public function update(
-        CompanySizeRequest $request,
-        CompanySize $companySize
-    ): RedirectResponse {
+    public function update(CompanySizeRequest $request, CompanySize $companySize): RedirectResponse 
+    {
         $validated = $request->validated();
 
         DB::transaction(function () use ($companySize, $validated) {
@@ -153,13 +123,9 @@ class CompanySizeController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.company-sizes.index')
-            ->with('success', 'Company size updated successfully.');
+        return redirect()->route('admin.company-sizes.index')->with('success', 'Company size updated successfully.');
     }
 
-    /**
-     * Move a company size to trash.
-     */
     public function destroy(CompanySize $companySize): RedirectResponse
     {
         $this->authorize('delete', $companySize);
@@ -172,85 +138,75 @@ class CompanySizeController extends Controller
             $companySize->delete();
         });
 
-        return redirect()
-            ->route('admin.company-sizes.index')
-            ->with('success', 'Company size moved to trash successfully.');
+        return redirect()->route('admin.company-sizes.index')->with('success', 'Company size moved to trash successfully.');
     }
 
-    /**
-     * Display trashed company sizes.
-     */
+
     public function trash(Request $request): View
     {
         $this->authorize('viewAny', CompanySize::class);
 
-        $search = $request->input('search');
-        $deletedBy = $request->input('deleted_by');
-        $deletedPeriod = $request->input('deleted_period');
+        $search = trim($request->input('search', ''));
+        $deletedBy = $request->input('deleted_by', '');
+        $deletedPeriod = $request->input('deleted_period', '');
 
-        $query = CompanySize::onlyTrashed()
+        $companySizes = CompanySize::onlyTrashed()
             ->with([
                 'deletedBy:id,name,role',
                 'createdBy:id,name',
                 'updatedBy:id,name',
-            ]);
-            // ->withCount('companies');
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($deletedBy !== '', function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
+            })
+            ->when($deletedPeriod !== '', function ($query) use ($deletedPeriod) {
+                $now = now();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
+                switch ($deletedPeriod) {
+                    case 'today':
+                        $query->whereDate('deleted_at', $now->toDateString());
+                        break;
 
-        if ($deletedBy) {
-            $query->where('deleted_by', $deletedBy);
-        }
+                    case 'yesterday':
+                        $query->whereDate(
+                            'deleted_at',
+                            $now->copy()->subDay()->toDateString()
+                        );
+                        break;
 
-        if ($deletedPeriod) {
-            $now = now();
+                    case 'last_7_days':
+                        $query->whereBetween('deleted_at', [
+                            $now->copy()->subDays(7),
+                            $now,
+                        ]);
+                        break;
 
-            switch ($deletedPeriod) {
-                case 'today':
-                    $query->whereDate('deleted_at', $now->toDateString());
-                    break;
+                    case 'last_30_days':
+                        $query->whereBetween('deleted_at', [
+                            $now->copy()->subDays(30),
+                            $now,
+                        ]);
+                        break;
 
-                case 'yesterday':
-                    $query->whereDate(
-                        'deleted_at',
-                        $now->copy()->subDay()->toDateString()
-                    );
-                    break;
+                    case 'last_3_months':
+                        $query->whereBetween('deleted_at', [
+                            $now->copy()->subMonths(3),
+                            $now,
+                        ]);
+                        break;
 
-                case 'last_7_days':
-                    $query->whereBetween('deleted_at', [
-                        $now->copy()->subDays(7),
-                        $now,
-                    ]);
-                    break;
-
-                case 'last_30_days':
-                    $query->whereBetween('deleted_at', [
-                        $now->copy()->subDays(30),
-                        $now,
-                    ]);
-                    break;
-
-                case 'last_3_months':
-                    $query->whereBetween('deleted_at', [
-                        $now->copy()->subMonths(3),
-                        $now,
-                    ]);
-                    break;
-
-                case 'this_year':
-                    $query->whereYear('deleted_at', $now->year);
-                    break;
-            }
-        }
-
-        $companySizes = $query
+                    case 'this_year':
+                        $query->whereYear('deleted_at', $now->year);
+                        break;
+                }
+            })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
@@ -266,20 +222,19 @@ class CompanySizeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
 
-        $stats = [
-            'totalTrashed' => CompanySize::onlyTrashed()->count(),
+        // Summary Statistics
+        $totalTrashedCompanySizes = CompanySize::onlyTrashed()->count();
 
-            'deletedToday' => CompanySize::onlyTrashed()
-                ->whereDate('deleted_at', today())
-                ->count(),
+        $deletedTodayCompanySizes = CompanySize::onlyTrashed()
+            ->whereDate('deleted_at', today())
+            ->count();
 
-            'deletedThisWeek' => CompanySize::onlyTrashed()
-                ->whereBetween('deleted_at', [
-                    now()->subDays(7),
-                    now(),
-                ])
-                ->count(),
-        ];
+        $deletedThisWeekCompanySizes = CompanySize::onlyTrashed()
+            ->whereBetween('deleted_at', [
+                now()->subDays(7),
+                now(),
+            ])
+            ->count();
 
         return view('admin.company.company-size.trash', compact(
             'companySizes',
@@ -287,13 +242,12 @@ class CompanySizeController extends Controller
             'deletedBy',
             'deletedPeriod',
             'users',
-            'stats'
+            'totalTrashedCompanySizes',
+            'deletedTodayCompanySizes',
+            'deletedThisWeekCompanySizes',
         ));
     }
 
-    /**
-     * Restore a trashed company size.
-     */
     public function restore(CompanySize $companySize): RedirectResponse
     {
         $this->authorize('restore', $companySize);
@@ -313,9 +267,7 @@ class CompanySizeController extends Controller
             ])->save();
         });
 
-        return redirect()
-            ->route('admin.company-sizes.trash')
-            ->with('success', 'Company size restored successfully.');
+        return redirect()->route('admin.company-sizes.trash')->with('success', 'Company size restored successfully.');
     }
 
     /**
@@ -331,20 +283,11 @@ class CompanySizeController extends Controller
                 ->with('error', 'Only trashed company sizes can be permanently deleted.');
         }
 
-        // if ($companySize->companies()->exists()) {
-        //     return back()->with(
-        //         'error',
-        //         'This company size cannot be permanently deleted because it is associated with companies.'
-        //     );
-        // }
-
         DB::transaction(function () use ($companySize) {
             $companySize->forceDelete();
         });
 
-        return redirect()
-            ->route('admin.company-sizes.trash')
-            ->with('success', 'Company size permanently deleted.');
+        return redirect()->route('admin.company-sizes.trash')->with('success', 'Company size permanently deleted.');
     }
 
     private function generateUniqueSlug(string $name, ?int $ignoreId = null): string

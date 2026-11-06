@@ -18,7 +18,11 @@
 
     {{-- Statistics --}}
     <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm" data-section="industryTrashStates" open>
-        <x-admin.ui.stat-summary description="Overview of deleted industries and their deletion activity." />
+        <x-admin.ui.disclosure-summary 
+            title="Statistics"
+            icon="fa-solid fa-chart-simple"
+            description="Overview of deleted industries and their deletion activity."
+        />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:p-1 bg-[radial-gradient(circle_at_center,_theme(colors.gray.200),_theme(colors.gray.100))]">
 

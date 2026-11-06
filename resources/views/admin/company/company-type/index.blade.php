@@ -1,78 +1,137 @@
-
 @extends('layouts.admin.app')
 
 @section('title', 'Company Types | CareerVault')
 @section('page_title', 'Company Types')
 
 @section('content')
-    <div class="space-y-5 p-4 sm:p-6">
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
+    <div class="space-y-3 p-4 sm:p-6">
+        {{-- ========================= HEADER ========================= --}}
+        <x-admin.ui.page-header
+            icon="fa-solid fa-building text-lg"    
+            title="Company Types"
+            title-color="text-primary"
+            title-bg-color="bg-primary/10 text-primary"
+            description="Manage business organization categories."
+            :create-route="route('admin.company-types.create')"
+            create-text="Add Company Type"
+            :trash-route="route('admin.company-types.trash')"
+            :trash-count="$trashedCompanyTypesCount"
+        />
 
-        @if (session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
-        @endif
+        {{-- ========================= STATISTICS ========================= --}}
+        <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm"
+            data-section="companyTypeStates" open>
+            <x-admin.ui.disclosure-summary
+                title="Statistics"
+                icon="fa-solid fa-chart-simple"
+                description="Overview of company types and their current status."
+            />
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-xl font-bold">Company Types</h1>
-                <p class="mt-1 text-sm text-base-content/60">
-                    Manage business organization categories.
-                </p>
-            </div>
+            {{-- ===================== OVERVIEW STATS ====================== --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:p-1 bg-[radial-gradient(circle_at_center,_theme(colors.gray.200),_theme(colors.gray.100))]">
+                {{-- Total --}}
+                <x-admin.ui.statistic
+                    title="Company Types"
+                    title-icon="fa-solid fa-users"
+                    main-icon="fa-solid fa-layer-group"
+                    main-icon-color="bg-info/10 text-info"
+                    :total="$totalCompanyTypes"
+                    total-description="Total company types in the system"
+                    last-icon="fa-solid fa-database"
+                />
 
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('admin.company-types.trash') }}" class="btn btn-outline btn-sm">
-                    <icon></icon> Trash
-                    <span class="badge badge-neutral">{{ $trashedCompanyTypesCount }}</span>
-                </a>
-                <a href="{{ route('admin.company-types.create') }}" class="btn btn-primary btn-sm">
-                    + Add Company Type
-                </a>
-            </div>
-        </div>
+                {{-- Active --}}
+                <x-admin.ui.statistic
+                    title="Active"
+                    title-icon="fa-solid fa-circle-check"
+                    main-icon="fa-solid fa-toggle-on"
+                    main-icon-color="bg-success/10 text-success"
+                    :total="$activeCompanyTypes"
+                    total-description="Currently active company types"
+                    last-icon="fa-solid fa-eye"
+                />
 
-        <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
-                <div class="stat-title">Total</div>
-                <div class="stat-value text-2xl">{{ $totalCompanyTypes }}</div>
+                {{-- Inactive --}}
+                <x-admin.ui.statistic
+                    title="Inactive"
+                    title-icon="fa-solid fa-circle-xmark"
+                    main-icon="fa-solid fa-toggle-off"
+                    main-icon-color="bg-warning/10 text-warning"
+                    :total="$inactiveCompanyTypes"
+                    total-description="Currently inactive company types"
+                    last-icon="fa-solid fa-eye-slash"
+                />
+
+                {{-- Trash --}}
+                <x-admin.ui.statistic
+                    title="Trash"
+                    title-icon="fa-solid fa-trash-can"
+                    main-icon="fa-solid fa-recycle"
+                    main-icon-color="bg-error/10 text-error"
+                    :total="$trashedCompanyTypesCount"
+                    total-description="Soft-deleted company types"
+                    last-icon="fa-solid fa-clock-rotate-left"
+                />
             </div>
-            <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
-                <div class="stat-title">Active</div>
-                <div class="stat-value text-2xl text-success">{{ $activeCompanyTypes }}</div>
-            </div>
-            <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
-                <div class="stat-title">Inactive</div>
-                <div class="stat-value text-2xl text-warning">{{ $inactiveCompanyTypes }}</div>
-            </div>
-            <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
-                <div class="stat-title">In Trash</div>
-                <div class="stat-value text-2xl text-error">{{ $trashedCompanyTypesCount }}</div>
-            </div>
-        </div>
+        </details>
+
+        {{-- ========================= FILTERS ========================= --}}
+        <x-admin.filters.panel
+            title="Filter Company Sizes"
+            description="Narrow the list by name, slug, description, or status."
+            section="companyTypeFilters"
+            action="{{ route('admin.company-types.index') }}"
+            clear-url="{{ route('admin.company-types.index') }}"
+            result-label="company type"
+            result-label-plural="company types"
+            summary="Company type categories and employee ranges"
+            gridClass="grid grid-cols-1 gap-4 sm:grid-cols-4"
+
+            :count="$companyTypes->count()"
+            :total="$totalCompanyTypes"
+
+            :fields="[
+                [
+                    'type' => 'search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'icon' => 'fa-brands fa-searchengin',
+                    'placeholder' => 'Search company types...',
+                    'value' => $search,
+                    'span' => 'sm:col-span-3',
+                ],
+                [
+                    'type' => 'select',
+                    'name' => 'status',
+                    'label' => 'Status',
+                    'icon' => 'fa-solid fa-power-off',
+                    'value' => $status,
+                    'options' => [
+                        'active' => 'Active',
+                        'inactive' => 'Inactive',
+                    ],
+                ],
+            ]"
+
+            :active-filters="[
+                [
+                    'show' => filled($search),
+                    'icon' => 'fa-solid fa-magnifying-glass',
+                    'label' => 'Search',
+                    'value' => $search,
+                    'color' => 'primary',
+                ],
+                [
+                    'show' => filled($status),
+                    'icon' => 'fa-solid fa-power-off',
+                    'label' => 'Status',
+                    'value' => ucfirst($status ?? ''),
+                    'color' => 'warning',
+                ],
+            ]"
+        />
 
         <section class="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
-            <form method="GET" action="{{ route('admin.company-types.index') }}"
-                class="grid gap-3 border-b border-base-300 p-4 sm:grid-cols-2 xl:grid-cols-[1fr_200px_auto_auto]">
-                <input
-                    type="search"
-                    name="search"
-                    value="{{ request('search') }}"
-                    placeholder="Search name, slug or description..."
-                    class="input input-bordered w-full"
-                >
-
-                <select name="status" class="select select-bordered w-full">
-                    <option value="">All statuses</option>
-                    <option value="active" @selected(request('status') === 'active')>Active</option>
-                    <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
-                </select>
-
-                <button type="submit" class="btn btn-primary">Filter</button>
-                <a href="{{ route('admin.company-types.index') }}" class="btn btn-ghost">Reset</a>
-            </form>
-
             <div class="overflow-x-auto">
                 <table class="table table-zebra">
                     <thead>
