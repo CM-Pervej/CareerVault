@@ -7,9 +7,6 @@
 @section('content')
 <div class="space-y-4 p-4 sm:p-6">
     <div>
-        <a href="{{ route('admin.ownership-types.index') }}" class="link link-hover text-sm">
-            ← Ownership Types
-        </a>
         <h1 class="mt-2 text-xl font-bold">Edit ownership type</h1>
         <p class="mt-1 text-sm text-base-content/60">
             Update {{ $ownershipType->name }}.

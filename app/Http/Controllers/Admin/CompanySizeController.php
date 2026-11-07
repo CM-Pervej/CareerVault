@@ -141,15 +141,13 @@ class CompanySizeController extends Controller
         return redirect()->route('admin.company-sizes.index')->with('success', 'Company size moved to trash successfully.');
     }
 
-
     public function trash(Request $request): View
     {
         $this->authorize('viewAny', CompanySize::class);
-
         $search = trim($request->input('search', ''));
         $deletedBy = $request->input('deleted_by', '');
-        $deletedPeriod = $request->input('deleted_period', '');
-
+        $deletedPeriod = trim($request->input('deleted_period', ''));
+        
         $companySizes = CompanySize::onlyTrashed()
             ->with([
                 'deletedBy:id,name,role',
@@ -163,79 +161,29 @@ class CompanySizeController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->when($deletedBy !== '', function ($query) use ($deletedBy) {
+            ->when($deletedBy, function ($query) use ($deletedBy) {
                 $query->where('deleted_by', $deletedBy);
             })
-            ->when($deletedPeriod !== '', function ($query) use ($deletedPeriod) {
-                $now = now();
-
-                switch ($deletedPeriod) {
-                    case 'today':
-                        $query->whereDate('deleted_at', $now->toDateString());
-                        break;
-
-                    case 'yesterday':
-                        $query->whereDate(
-                            'deleted_at',
-                            $now->copy()->subDay()->toDateString()
-                        );
-                        break;
-
-                    case 'last_7_days':
-                        $query->whereBetween('deleted_at', [
-                            $now->copy()->subDays(7),
-                            $now,
-                        ]);
-                        break;
-
-                    case 'last_30_days':
-                        $query->whereBetween('deleted_at', [
-                            $now->copy()->subDays(30),
-                            $now,
-                        ]);
-                        break;
-
-                    case 'last_3_months':
-                        $query->whereBetween('deleted_at', [
-                            $now->copy()->subMonths(3),
-                            $now,
-                        ]);
-                        break;
-
-                    case 'this_year':
-                        $query->whereYear('deleted_at', $now->year);
-                        break;
-                }
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
+                    'today' => $query->whereDate('deleted_at', today()),
+                    'yesterday' => $query->whereDate('deleted_at', today()->subDay()),
+                    'last_7_days' => $query->where('deleted_at', '>=', now()->subDays(7)),
+                    'last_30_days' => $query->where('deleted_at', '>=', now()->subDays(30)),
+                    'last_3_months' => $query->where('deleted_at', '>=', now()->subMonths(3)),
+                    'this_year' => $query->whereYear('deleted_at', now()->year),
+                    default => null,
+                };
             })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
-
-        $users = User::query()
-            ->whereIn(
-                'id',
-                CompanySize::onlyTrashed()
-                    ->whereNotNull('deleted_by')
-                    ->select('deleted_by')
-                    ->distinct()
-            )
+        $users = User::whereIn('id', CompanySize::onlyTrashed()->whereNotNull('deleted_by')->distinct()->pluck('deleted_by'))
             ->orderBy('name')
-            ->get(['id', 'name', 'role']);
-
-        // Summary Statistics
+            ->get(['id', 'name']);
         $totalTrashedCompanySizes = CompanySize::onlyTrashed()->count();
-
-        $deletedTodayCompanySizes = CompanySize::onlyTrashed()
-            ->whereDate('deleted_at', today())
-            ->count();
-
-        $deletedThisWeekCompanySizes = CompanySize::onlyTrashed()
-            ->whereBetween('deleted_at', [
-                now()->subDays(7),
-                now(),
-            ])
-            ->count();
-
+        $deletedTodayCompanySizes = CompanySize::onlyTrashed()->whereDate('deleted_at', today())->count();
+        $deletedThisWeekCompanySizes = CompanySize::onlyTrashed()->where('deleted_at', '>=', now()->subDays(7))->count();
         return view('admin.company.company-size.trash', compact(
             'companySizes',
             'search',
@@ -244,7 +192,7 @@ class CompanySizeController extends Controller
             'users',
             'totalTrashedCompanySizes',
             'deletedTodayCompanySizes',
-            'deletedThisWeekCompanySizes',
+            'deletedThisWeekCompanySizes'
         ));
     }
 

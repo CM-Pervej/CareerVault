@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\OwnershipTypeRequest;
 use App\Models\OwnershipType;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -20,19 +22,26 @@ class OwnershipTypeController extends Controller
     {
         $this->authorize('viewAny', OwnershipType::class);
 
-        $query = OwnershipType::query();
+        $query = OwnershipType::query()
+            ->with([
+                'creator:id,name,role',
+                'updater:id,name,role',
+            ]);
 
-        if ($search = trim((string) $request->query('search'))) {
-            $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
+        $search = trim((string) $request->input('search', ''));
+        $status = $request->input('status');
+
+        if (filled($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-        if ($request->query('status') === 'active') {
+        if ($status === 'active') {
             $query->where('is_active', true);
-        } elseif ($request->query('status') === 'inactive') {
+        } elseif ($status === 'inactive') {
             $query->where('is_active', false);
         }
 
@@ -51,7 +60,7 @@ class OwnershipTypeController extends Controller
 
         return view(
             'admin.company.ownership-type.index',
-            compact('ownershipTypes', 'stats')
+            compact('ownershipTypes', 'stats', 'search', 'status')
         );
     }
 
@@ -59,25 +68,31 @@ class OwnershipTypeController extends Controller
     {
         $this->authorize('create', OwnershipType::class);
 
-        return view('admin.company.ownership-type.create');
+        $ownershipType = new OwnershipType([
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        return view(
+            'admin.company.ownership-type.create',
+            compact('ownershipType')
+        );
     }
 
     public function store(OwnershipTypeRequest $request): RedirectResponse
     {
-        $this->authorize('create', OwnershipType::class);
+        $validated = $request->validated();
 
-        $data = $request->validated();
-
-        $data['slug'] = $this->makeUniqueSlug(
-            $data['slug'] ?: $data['name']
-        );
-
-        $data['is_active'] = $request->boolean('is_active');
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-        $data['created_by'] = Auth::id();
-        $data['updated_by'] = Auth::id();
-
-        OwnershipType::create($data);
+        DB::transaction(function () use ($validated) {
+            OwnershipType::create([
+                ...$validated,
+                'slug' => $this->makeUniqueSlug(
+                    $validated['slug'] ?: $validated['name']
+                ),
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.ownership-types.index')
@@ -91,6 +106,7 @@ class OwnershipTypeController extends Controller
         $ownershipType->load([
             'creator:id,name',
             'updater:id,name',
+            'deleter:id,name',
         ]);
 
         return view(
@@ -113,20 +129,21 @@ class OwnershipTypeController extends Controller
         OwnershipTypeRequest $request,
         OwnershipType $ownershipType
     ): RedirectResponse {
-        $this->authorize('update', $ownershipType);
+        $validated = $request->validated();
 
-        $data = $request->validated();
+        DB::transaction(function () use ($validated, $ownershipType) {
+            if ($ownershipType->name !== $validated['name']) {
+                $validated['slug'] = $this->makeUniqueSlug(
+                    $validated['slug'] ?: $validated['name'],
+                    $ownershipType->id
+                );
+            }
 
-        $data['slug'] = $this->makeUniqueSlug(
-            $data['slug'] ?: $data['name'],
-            $ownershipType->id
-        );
-
-        $data['is_active'] = $request->boolean('is_active');
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-        $data['updated_by'] = Auth::id();
-
-        $ownershipType->update($data);
+            $ownershipType->update([
+                ...$validated,
+                'updated_by' => Auth::id(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.ownership-types.index')
@@ -138,65 +155,131 @@ class OwnershipTypeController extends Controller
     ): RedirectResponse {
         $this->authorize('delete', $ownershipType);
 
-        $ownershipType->deleted_by = Auth::id();
-        $ownershipType->save();
+        DB::transaction(function () use ($ownershipType) {
+            $ownershipType->update([
+                'deleted_by' => Auth::id(),
+            ]);
 
-        $ownershipType->delete();
+            $ownershipType->delete();
+        });
 
         return redirect()
             ->route('admin.ownership-types.index')
-            ->with('success', 'Ownership type moved to trash.');
+            ->with('success', 'Ownership type moved to trash successfully.');
     }
 
     public function trash(Request $request): View
     {
         $this->authorize('viewAny', OwnershipType::class);
 
-        $query = OwnershipType::onlyTrashed()
-            ->with('deleter:id,name');
+        $search = trim($request->input('search', ''));
+        $deletedBy = $request->input('deleted_by', '');
+        $deletedPeriod = trim($request->input('deleted_period', ''));
 
-        if ($search = trim((string) $request->query('search'))) {
-            $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $ownershipTypes = $query
+        $ownershipTypes = OwnershipType::onlyTrashed()
+            ->with([
+                'deleter:id,name,role',
+                'creator:id,name',
+                'updater:id,name',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($deletedBy, function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
+            })
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
+                    'today' => $query->whereDate('deleted_at', today()),
+                    'yesterday' => $query->whereDate('deleted_at', today()->subDay()),
+                    'last_7_days' => $query->where('deleted_at', '>=', now()->subDays(7)),
+                    'last_30_days' => $query->where('deleted_at', '>=', now()->subDays(30)),
+                    'last_3_months' => $query->where('deleted_at', '>=', now()->subMonths(3)),
+                    'this_year' => $query->whereYear('deleted_at', now()->year),
+                    default => null,
+                };
+            })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
 
+        $users = User::whereIn(
+            'id',
+            OwnershipType::onlyTrashed()
+                ->whereNotNull('deleted_by')
+                ->distinct()
+                ->pluck('deleted_by')
+        )
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+
+        $stats = [
+            'trashed' => OwnershipType::onlyTrashed()->count(),
+            'deleted_today' => OwnershipType::onlyTrashed()
+                ->whereDate('deleted_at', today())
+                ->count(),
+            'deleted_this_week' => OwnershipType::onlyTrashed()
+                ->where('deleted_at', '>=', now()->subDays(7))
+                ->count(),
+        ];
+
         return view(
             'admin.company.ownership-type.trash',
-            compact('ownershipTypes')
+            compact(
+                'ownershipTypes',
+                'search',
+                'deletedBy',
+                'deletedPeriod',
+                'users',
+                'stats'
+            )
         );
     }
 
-    public function restore(int $id): RedirectResponse
+    public function restore(OwnershipType $ownershipType): RedirectResponse
     {
-        $ownershipType = OwnershipType::onlyTrashed()->findOrFail($id);
-
         $this->authorize('restore', $ownershipType);
 
-        $ownershipType->restore();
-        $ownershipType->deleted_by = null;
-        $ownershipType->updated_by = Auth::id();
-        $ownershipType->save();
+        if (!$ownershipType->trashed()) {
+            return redirect()
+                ->route('admin.ownership-types.trash')
+                ->with('error', 'This ownership type is not in the trash.');
+        }
+
+        DB::transaction(function () use ($ownershipType) {
+            $ownershipType->restore();
+
+            $ownershipType->forceFill([
+                'deleted_by' => null,
+                'updated_by' => Auth::id(),
+            ])->save();
+        });
 
         return redirect()
             ->route('admin.ownership-types.trash')
             ->with('success', 'Ownership type restored successfully.');
     }
 
-    public function forceDelete(int $id): RedirectResponse
+    /**
+     * Permanently delete a trashed ownership type.
+     */
+    public function forceDelete(OwnershipType $ownershipType): RedirectResponse
     {
-        $ownershipType = OwnershipType::onlyTrashed()->findOrFail($id);
-
         $this->authorize('forceDelete', $ownershipType);
 
-        $ownershipType->forceDelete();
+        if (!$ownershipType->trashed()) {
+            return redirect()
+                ->route('admin.ownership-types.trash')
+                ->with('error', 'Only trashed ownership types can be permanently deleted.');
+        }
+
+        DB::transaction(function () use ($ownershipType) {
+            $ownershipType->forceDelete();
+        });
 
         return redirect()
             ->route('admin.ownership-types.trash')
@@ -207,20 +290,26 @@ class OwnershipTypeController extends Controller
         string $value,
         ?int $ignoreId = null
     ): string {
-        $base = Str::slug($value) ?: 'ownership-type';
+        $base = Str::slug($value);
+
+        if ($base === '') {
+            $base = 'ownership-type';
+        }
+
         $slug = $base;
-        $counter = 2;
+        $counter = 1;
 
         while (
             OwnershipType::withTrashed()
                 ->where('slug', $slug)
                 ->when(
-                    $ignoreId,
+                    $ignoreId !== null,
                     fn ($query) => $query->where('id', '!=', $ignoreId)
                 )
                 ->exists()
         ) {
-            $slug = $base . '-' . $counter++;
+            $counter++;
+            $slug = $base . '-' . $counter;
         }
 
         return $slug;

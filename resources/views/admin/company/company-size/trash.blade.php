@@ -212,11 +212,11 @@
                                         <i class="fa-solid fa-users"></i>
                                     </div>
 
-                                    <div class="min-w-0">
+                                    <div class="w-48 min-w-0">
                                         <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="font-semibold text-base-content transition hover:text-primary"> {{ $companySize->name }} </a>
 
                                         @if ($companySize->description)
-                                            <p class="mt-1 line-clamp-2 max-w-xl text-sm leading-relaxed text-base-content/65"> {{ $companySize->description }} </p>
+                                            <p class="mt-1 line-clamp-2 w-full text-sm leading-relaxed text-base-content/65"> {{ $companySize->description }} </p>
                                         @endif
                                     </div>
                                 </div>

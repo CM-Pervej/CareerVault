@@ -16,38 +16,45 @@ use Illuminate\View\View;
 
 class CompanyTypeController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', CompanyType::class);
 
-        $search = trim($request->input('search', ''));
+        $query = CompanyType::query()
+            ->with([
+                'createdBy:id,name,role',
+                'updatedBy:id,name,role',
+            ]);
+
+        $search = $request->input('search');
         $status = $request->input('status');
 
-        $companyTypes = CompanyType::query()
-            ->with([
-                'createdBy:id,name',
-                'updatedBy:id,name',
-            ])
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('slug', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
-            })
-            ->when($status !== null && $status !== '', function ($query) use ($status) {
-                $query->where('is_active', $status === 'active');
-            })
+        if (filled($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        $companyTypes = $query
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
-        // Summary Statistics
         $totalCompanyTypes = CompanyType::count();
         $activeCompanyTypes = CompanyType::where('is_active', true)->count();
         $inactiveCompanyTypes = CompanyType::where('is_active', false)->count();
-        $trashedCompanyTypes = CompanyType::onlyTrashed()->count();
+        $trashedCompanyTypesCount = CompanyType::onlyTrashed()->count();
 
         return view('admin.company.company-type.index', compact(
             'companyTypes',
@@ -56,12 +63,14 @@ class CompanyTypeController extends Controller
             'totalCompanyTypes',
             'activeCompanyTypes',
             'inactiveCompanyTypes',
-            'trashedCompanyTypes',
+            'trashedCompanyTypesCount'
         ));
     }
-
+    
     public function create(): View
     {
+        $this->authorize('create', CompanyType::class);
+
         $companyType = new CompanyType([
             'is_active' => true,
             'sort_order' => 0,
@@ -90,6 +99,8 @@ class CompanyTypeController extends Controller
 
     public function show(CompanyType $companyType): View
     {
+        $this->authorize('view', $companyType);
+
         $companyType->load([
             'createdBy:id,name',
             'updatedBy:id,name',
@@ -101,6 +112,8 @@ class CompanyTypeController extends Controller
 
     public function edit(CompanyType $companyType): View
     {
+        $this->authorize('update', $companyType);
+
         return view('admin.company.company-type.edit', compact('companyType'));
     }
 
@@ -111,28 +124,28 @@ class CompanyTypeController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $companyType) {
-            $data = [
-                ...$validated,
-                'updated_by' => Auth::id(),
-            ];
-
             if ($companyType->name !== $validated['name']) {
-                $data['slug'] = $this->generateUniqueSlug(
+                $validated['slug'] = $this->generateUniqueSlug(
                     $validated['name'],
                     $companyType->id
                 );
             }
 
-            $companyType->update($data);
+            $companyType->update([
+                ...$validated,
+                'updated_by' => Auth::id(),
+            ]);
         });
 
         return redirect()
-            ->route('admin.company-types.show', $companyType)
+            ->route('admin.company-types.index')
             ->with('success', 'Company type updated successfully.');
     }
 
     public function destroy(CompanyType $companyType): RedirectResponse
     {
+        $this->authorize('delete', $companyType);
+
         DB::transaction(function () use ($companyType) {
             $companyType->update([
                 'deleted_by' => Auth::id(),
@@ -143,79 +156,81 @@ class CompanyTypeController extends Controller
 
         return redirect()
             ->route('admin.company-types.index')
-            ->with('success', 'Company type moved to trash.');
+            ->with('success', 'Company type moved to trash successfully.');
     }
+
 
     public function trash(Request $request): View
     {
-        $query = CompanyType::onlyTrashed()
-            ->with('deletedBy:id,name');
-
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('deleted_period')) {
-            $now = now();
-
-            match ($request->deleted_period) {
-                'today' => $query->whereDate('deleted_at', $now->toDateString()),
-                'yesterday' => $query->whereDate(
-                    'deleted_at',
-                    $now->copy()->subDay()->toDateString()
-                ),
-                'last_7_days' => $query->where(
-                    'deleted_at',
-                    '>=',
-                    $now->copy()->subDays(7)
-                ),
-                'last_30_days' => $query->where(
-                    'deleted_at',
-                    '>=',
-                    $now->copy()->subDays(30)
-                ),
-                'last_3_months' => $query->where(
-                    'deleted_at',
-                    '>=',
-                    $now->copy()->subMonths(3)
-                ),
-                'this_year' => $query->whereYear('deleted_at', $now->year),
-                default => null,
-            };
-        }
-
-        $companyTypes = $query
+        $this->authorize('viewAny', CompanyType::class);
+        $search = trim($request->input('search', ''));
+        $deletedBy = $request->input('deleted_by', '');
+        $deletedPeriod = trim($request->input('deleted_period', ''));
+        $companyTypes = CompanyType::onlyTrashed()
+            ->with([
+                'deletedBy:id,name,role',
+                'createdBy:id,name',
+                'updatedBy:id,name',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($deletedBy, function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
+            })
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
+                    'today' => $query->whereDate('deleted_at', today()),
+                    'yesterday' => $query->whereDate('deleted_at', today()->subDay()),
+                    'last_7_days' => $query->where('deleted_at', '>=', now()->subDays(7)),
+                    'last_30_days' => $query->where('deleted_at', '>=', now()->subDays(30)),
+                    'last_3_months' => $query->where('deleted_at', '>=', now()->subMonths(3)),
+                    'this_year' => $query->whereYear('deleted_at', now()->year),
+                    default => null,
+                };
+            })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
-
+        $users = User::whereIn('id', CompanyType::onlyTrashed()->whereNotNull('deleted_by')->distinct()->pluck('deleted_by'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
         $trashedCompanyTypesCount = CompanyType::onlyTrashed()->count();
-
+        $deletedTodayCompanyTypes = CompanyType::onlyTrashed()->whereDate('deleted_at', today())->count();
+        $deletedThisWeekCompanyTypes = CompanyType::onlyTrashed()->where('deleted_at', '>=', now()->subDays(7))->count();
         return view('admin.company.company-type.trash', compact(
             'companyTypes',
-            'trashedCompanyTypesCount'
+            'search',
+            'deletedBy',
+            'deletedPeriod',
+            'users',
+            'trashedCompanyTypesCount',
+            'deletedTodayCompanyTypes',
+            'deletedThisWeekCompanyTypes'
         ));
     }
 
-    public function restore(string $companyType): RedirectResponse
+    public function restore(CompanyType $companyType): RedirectResponse
     {
-        $record = CompanyType::onlyTrashed()
-            ->where('id', $companyType)
-            ->firstOrFail();
+        $this->authorize('restore', $companyType);
 
-        DB::transaction(function () use ($record) {
-            $record->restore();
+        if (!$companyType->trashed()) {
+            return redirect()
+                ->route('admin.company-types.trash')
+                ->with('error', 'This company type is not in the trash.');
+        }
 
-            $record->update([
+        DB::transaction(function () use ($companyType) {
+            $companyType->restore();
+
+            $companyType->forceFill([
                 'deleted_by' => null,
                 'updated_by' => Auth::id(),
-            ]);
+            ])->save();
         });
 
         return redirect()
@@ -223,13 +238,22 @@ class CompanyTypeController extends Controller
             ->with('success', 'Company type restored successfully.');
     }
 
-    public function forceDelete(string $companyType): RedirectResponse
+    /**
+     * Permanently delete a trashed company type.
+     */
+    public function forceDelete(CompanyType $companyType): RedirectResponse
     {
-        $record = CompanyType::onlyTrashed()
-            ->where('id', $companyType)
-            ->firstOrFail();
+        $this->authorize('forceDelete', $companyType);
 
-        $record->forceDelete();
+        if (!$companyType->trashed()) {
+            return redirect()
+                ->route('admin.company-types.trash')
+                ->with('error', 'Only trashed company types can be permanently deleted.');
+        }
+
+        DB::transaction(function () use ($companyType) {
+            $companyType->forceDelete();
+        });
 
         return redirect()
             ->route('admin.company-types.trash')
