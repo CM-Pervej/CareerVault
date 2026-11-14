@@ -27,8 +27,8 @@ class CompanySizeController extends Controller
 
         $companySizes = CompanySize::query()
             ->with([
-                'createdBy:id,name',
-                'updatedBy:id,name',
+                'createdBy:id,name,role',
+                'updatedBy:id,name,role',
             ])
             // ->withCount('companies')
             ->when($search, function ($query) use ($search) {
@@ -123,7 +123,7 @@ class CompanySizeController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.company-sizes.index')->with('success', 'Company size updated successfully.');
+        return redirect()->route('admin.company-sizes.show', $companySize)->with('success', 'Company size updated successfully.');
     }
 
     public function destroy(CompanySize $companySize): RedirectResponse
@@ -201,9 +201,7 @@ class CompanySizeController extends Controller
         $this->authorize('restore', $companySize);
 
         if (!$companySize->trashed()) {
-            return redirect()
-                ->route('admin.company-sizes.trash')
-                ->with('error', 'This company size is not in the trash.');
+            return redirect()->route('admin.company-sizes.trash')->with('error', 'This company size is not in the trash.');
         }
 
         DB::transaction(function () use ($companySize) {
@@ -226,9 +224,7 @@ class CompanySizeController extends Controller
         $this->authorize('forceDelete', $companySize);
 
         if (!$companySize->trashed()) {
-            return redirect()
-                ->route('admin.company-sizes.trash')
-                ->with('error', 'Only trashed company sizes can be permanently deleted.');
+            return redirect()->route('admin.company-sizes.trash')->with('error', 'Only trashed company sizes can be permanently deleted.');
         }
 
         DB::transaction(function () use ($companySize) {

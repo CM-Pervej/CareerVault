@@ -44,7 +44,7 @@ class CompanySizeRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('company_sizes', 'name')
-                    ->ignore($this->route('companySize')),
+                    ->ignore($companySizeId),
             ],
 
             'min_employees' => [

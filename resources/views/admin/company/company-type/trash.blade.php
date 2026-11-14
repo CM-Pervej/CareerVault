@@ -275,7 +275,7 @@
                                             class="btn btn-sm btn-success btn-outline gap-2 flex-1 sm:flex-none"
                                             title="Restore company type"
                                             data-admin-action
-                                            data-action-url="{{ route('admin.company-types.restore', $item->id) }}"
+                                            data-action-url="{{ route('admin.company-types.restore', $item->slug) }}"
                                             data-action-method="PATCH"
                                             data-action-type="success"
                                             data-action-title="Restore Company Type"
@@ -294,7 +294,7 @@
                                             class="btn btn-error btn-sm btn-outline gap-2 flex-1 sm:flex-none"
                                             title="Delete permanently"
                                             data-admin-action
-                                            data-action-url="{{ route('admin.company-types.force-delete', $item->id) }}"
+                                            data-action-url="{{ route('admin.company-types.force-delete', $item->slug) }}"
                                             data-action-method="DELETE"
                                             data-action-type="danger"
                                             data-action-title="Delete Company Type Permanently"
@@ -391,7 +391,7 @@
                                 type="button"
                                 class="btn btn-sm btn-success btn-outline min-w-0 flex-1 gap-2"
                                 data-admin-action
-                                data-action-url="{{ route('admin.company-types.restore', $item->id) }}"
+                                data-action-url="{{ route('admin.company-types.restore', $item->slug) }}"
                                 data-action-method="PATCH"
                                 data-action-type="success"
                                 data-action-title="Restore Company Type"
@@ -409,7 +409,7 @@
                                 type="button"
                                 class="btn btn-sm btn-error btn-outline min-w-0 flex-1 gap-2"
                                 data-admin-action
-                                data-action-url="{{ route('admin.company-types.force-delete', $item->id) }}"
+                                data-action-url="{{ route('admin.company-types.force-delete', $item->slug) }}"
                                 data-action-method="DELETE"
                                 data-action-type="danger"
                                 data-action-title="Delete Company Type Permanently"

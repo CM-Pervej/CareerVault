@@ -6,48 +6,45 @@
 @section('content')
     <div class="space-y-6">
         {{-- Overview --}}
-        <section class="overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm">
-            <header class="flex flex-col gap-4 border-b border-base-300 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-col gap-4 border-b border-base-300 p-5 sm:flex-row sm:items-center">
-                    <div class="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+        <section class="overflow-hidden border border-base-300 bg-base-100 shadow-sm">
+            <header class="flex flex-col gap-5 border-b border-base-300/80 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div class="flex min-w-0 flex-1 flex-col items-center gap-4 sm:flex-row">
+                    <div class="grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/10 shadow-sm">
                         <i class="fa-solid fa-users text-2xl"></i>
                     </div>
     
-                    <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h2 class="text-xl font-bold">{{ $companySize->name }}</h2>
-    
-                            @if ($companySize->is_active)
-                                <span class="badge badge-success badge-outline">Active</span>
-                            @else
-                                <span class="badge badge-ghost">Inactive</span>
-                            @endif
+                    <div class="min-w-0 flex-1 text-center sm:text-start">
+                        <div class="relative mx-auto w-fit sm:mx-0">
+                            <h2 class="text-xl font-bold tracking-tight text-base-content sm:text-2xl">
+                                {{ $companySize->name }}
+                            </h2>
+                            <span class="absolute -right-7 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-full ring-2 ring-base-100 {{ $companySize->is_active ? 'bg-emerald-500' : 'bg-base-content/40' }}">
+                                <i class="fa-solid {{ $companySize->is_active ? 'fa-check' : 'fa-pause' }} text-[9px] text-white"></i>
+                            </span>
                         </div>
     
                         <p class="mt-1 text-sm text-base-content/60">{{ $companySize->slug }}</p>
     
                         @if ($companySize->description)
-                            <p class="mt-3 max-w-3xl text-sm leading-6 text-base-content/80">
+                            <p class="mt-1 max-w-3xl text-sm leading-6 text-base-content/65">
                                 {{ $companySize->description }}
                             </p>
                         @endif
                     </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('admin.company-sizes.index') }}" class="btn btn-ghost btn-sm">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        Back
+                <div class="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
+                    <a href="{{ route('admin.company-sizes.index') }}" class="btn btn-ghost flex-1 border border-base-300/70 sm:btn-sm sm:flex-none">
+                        <i class="fa-solid fa-arrow-left"></i> Back
                     </a>
 
-                    <a href="{{ route('admin.company-sizes.edit', $companySize) }}" class="btn btn-primary btn-sm">
-                        <i class="fa-solid fa-pen"></i>
-                        Edit
+                    <a href="{{ route('admin.company-sizes.edit', $companySize) }}" class="btn btn-primary flex-1 shadow-sm shadow-primary/20 sm:btn-sm sm:flex-none">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
                     </a>
                 </div>
             </header>
 
-            <div class="grid grid-cols-1 divide-y divide-base-300 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div class="grid grid-cols-3 divide-y divide-base-300 sm:divide-x sm:divide-y-0">
                 <div class="p-5">
                     <p class="text-sm text-base-content/60">Minimum Employees</p>
                     <p class="mt-2 text-2xl font-bold">{{ number_format($companySize->min_employees) }}</p>

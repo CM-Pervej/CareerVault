@@ -143,179 +143,256 @@
             description="Employee ranges used to classify companies."
         />
 
-        {{-- ======================= DIRECTORY LIST ======================= --}}
-        <div class="divide-y divide-base-300">
-            @forelse ($companySizes as $companySize)
-                <div class="group relative my-2 border border-base-300 bg-base-100 p-4 shadow-sm transition hover:bg-base-200/30 sm:my-0 sm:border-0 sm:shadow-none sm:p-5">
-                    <div class="flex flex-col gap-5 xl:flex-row xl:items-center">
-                        {{-- ================= COMPANY SIZE IDENTITY ================= --}}
-                        <div class="flex min-w-0 flex-1 items-start gap-3">
-                            <div class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                                <i class="fa-solid fa-users text-xl"></i>
-                            </div>
+        {{-- ======================= DESKTOP LIST ======================= --}}
+        <div class="hidden overflow-x-auto sm:block">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th class="text-center">S.O.</th> <th>Name</th> <th>Employee</th> <th>Companies</th> <th>Action By</th> <th>Action Time</th> <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
 
-                            <div class="min-w-0 flex-1">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="font-semibold text-base-content transition hover:text-primary"> {{ $companySize->name }} </a>
+                <tbody>
+                    @forelse ($companySizes as $companySize)
+                        <tr>
+                            <td class="text-center font-semibold">
+                                {{ str_pad($companySize->sort_order, 2, '0', STR_PAD_LEFT) }}
+                            </td>
 
-                                    @if ($companySize->is_active)
-                                        <span class="badge badge-success badge-sm badge-outline">Active</span>
+                            <td class="flex min-w-0 flex-1 items-start gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="font-semibold text-base-content transition hover:text-primary"> {{ $companySize->name }} </a>
+
+                                        @if ($companySize->is_active)
+                                            <span class="badge badge-success badge-sm badge-outline">Active</span>
+                                        @else
+                                            <span class="badge badge-ghost badge-sm">Inactive</span>
+                                        @endif
+                                    </div>
+
+                                    @if ($companySize->description)
+                                        <p class="mt-0.5 line-clamp-2 max-w-xl text-sm leading-relaxed text-base-content/65"> {{ $companySize->description }} </p>
+                                    @endif
+                                </div>
+                            </td>
+
+                            <td>
+                                {{ number_format($companySize->min_employees) }}
+                                <span class="font-normal text-base-content/50">–</span>
+                                {{ $companySize->max_employees === null ? 'Unlimited' : number_format($companySize->max_employees) }}
+                            </td>
+
+                            <td>
+                                {{ number_format($companySize->companies_count ?? 0) }}
+                            </td>
+
+                            <td class="whitespace-nowrap">
+                                <div>
+                                    @if ($companySize->updatedBy?->name)
+                                        <span class="text-sm font-semibold text-green-500 font-serif">
+                                            {{ $companySize->updatedBy->name }}
+                                        </span>
+                                    @elseif ($companySize->createdBy?->name)
+                                        <span class="text-sm font-semibold text-blue-500 font-serif">
+                                            {{ $companySize->createdBy->name }}
+                                        </span>
                                     @else
-                                        <span class="badge badge-ghost badge-sm">Inactive</span>
+                                        <span class="text-xs text-center text-red-600">
+                                            Not Defined
+                                        </span>
                                     @endif
                                 </div>
 
-                                <p class="mt-1 break-all text-xs text-base-content/50"> {{ $companySize->slug }} </p>
+                                <div>
+                                    @if ($companySize->updatedBy?->role)
+                                        <span class="text-sm">
+                                            {{ $companySize->updatedBy->role }}
+                                        </span>
+                                    @elseif ($companySize->createdBy?->role)
+                                        <span class="text-sm">
+                                            {{ $companySize->createdBy->role }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
 
-                                @if ($companySize->description)
-                                    <p class="mt-2 line-clamp-2 max-w-xl text-sm leading-relaxed text-base-content/65"> {{ $companySize->description }} </p>
+                            {{-- Deletion Date --}}
+                            <td>
+                                <div class="flex items-start gap-2">
+                                    <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-error/10 text-error">
+                                        <i class="fa-solid fa-clock text-xs"></i>
+                                    </div>
+
+                                    <div class="whitespace-nowrap">
+                                        <div class="text-sm font-semibold leading-tight tracking-tighter">
+                                            {{ $companySize->updated_at?->format('d M Y, h:i A') }}
+                                        </div>
+
+                                        <div class="text-xs text-base-content/50">
+                                            {{ $companySize->updated_at?->diffForHumans() }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="hidden sm:flex sm:items-center gap-2 xl:justify-end">
+                                    <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="btn btn-sm btn-outline gap-2" title="View">
+                                        <i class="fa-regular fa-eye"></i> View
+                                    </a>
+
+                                    <div class="dropdown dropdown-center dropdown-left">
+                                        <button tabindex="0" class="btn btn-sm btn-ghost btn-square" aria-label="Page actions">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+
+                                        <ul tabindex="0" class="dropdown-content menu z-30 mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-xl">
+                                            <li>
+                                                <a href="{{ route('admin.company-sizes.show', $companySize) }}">
+                                                    <i class="fa-solid fa-eye"></i> View Company Size
+                                                </a>
+                                            </li>
+
+                                            <li>
+                                                <a href="{{ route('admin.company-sizes.edit', $companySize) }}">
+                                                    <i class="fa-solid fa-pen-to-square"></i> Edit Company Size
+                                                </a>
+                                            </li>
+
+                                            <li class="menu-title mt-1 px-3 py-1 text-[10px] uppercase tracking-wider">
+                                                <span>Danger zone</span>
+                                            </li>
+
+                                            <li>
+                                                <button
+                                                    type="button"
+                                                    class="!flex !w-full !max-w-full items-center gap-2 !justify-start rounded-lg px-3 py-2 text-error"
+                                                    title="Move Company Size to trash"
+                                                    data-admin-action
+                                                    data-action-url="{{ route('admin.company-sizes.destroy', $companySize) }}"
+                                                    data-action-method="DELETE"
+                                                    data-action-type="danger"
+                                                    data-action-title="Move Company Size to Trash"
+                                                    data-action-description="Move “{{ $companySize->name }}” to trash. You can restore it later from the Trash page."
+                                                    data-action-icon="fa-solid fa-trash-can"
+                                                    data-action-confirm-icon="fa-solid fa-trash-can"
+                                                    data-action-confirm-text="Move to Trash"
+                                                >
+                                                    <i class="fa-solid fa-trash-can shrink-0"></i>
+                                                    <span>Move to Trash</span>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-base-content/60">No company sizes found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- ======================= MOBILE CARDS ======================= --}}
+        <div class="sm:hidden space-y-3">
+            @forelse ($companySizes as $companySize)
+                <div class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+                    {{-- Card Header --}}
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex min-w-0 items-start gap-2">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                                {{ str_pad($companySize->sort_order, 2, '0', STR_PAD_LEFT) }}
+                            </span>
+
+                            <div class="min-w-0">
+                                <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="font-semibold hover:text-primary"> {{ $companySize->name }} </a>
+                                <p class="mt-0.5 break-all text-xs text-base-content/50"> {{ $companySize->slug }} </p>
+                            </div>
+                        </div>
+
+                        <span class="badge shrink-0 {{ $companySize->is_active ? 'badge-success' : 'badge-ghost' }}"> {{ $companySize->is_active ? 'Active' : 'Inactive' }} </span>
+                    </div>
+
+                    {{-- Description --}}
+                    @if ($companySize->description)
+                        <p class="mt-3 text-sm text-base-content/70"> {{ $companySize->description }} </p>
+                    @endif
+
+                    <div class="my-3 border-t border-base-300"></div>
+
+                    {{-- Action By --}}
+                    <div class="flex items-center justify-between gap-2 text-xs">
+                        <span class="text-base-content/50">Last Action By</span>
+
+                        <div class="text-right">
+                            <div>
+                                @if ($companySize->updatedBy?->name)
+                                    <span class="text-sm font-semibold text-green-500 font-serif"> {{ $companySize->updatedBy->name }} </span>
+                                @elseif ($companySize->createdBy?->name)
+                                    <span class="text-sm font-semibold text-blue-500 font-serif"> {{ $companySize->createdBy->name }} </span>
+                                @else
+                                    <span class="text-xs text-center text-red-600">Not Defined</span>
+                                @endif
+                            </div>
+
+                            <div>
+                                @if ($companySize->updatedBy?->role)
+                                    <span class="text-sm"> {{ $companySize->updatedBy->role }} </span>
+                                @elseif ($companySize->createdBy?->role)
+                                    <span class="text-sm"> {{ $companySize->createdBy->role }} </span>
                                 @endif
                             </div>
                         </div>
-
-                        {{-- ================= COMPANY SIZE DETAILS ================= --}}
-                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:w-[470px] xl:shrink-0">
-                            {{-- Employee Range --}}
-                            <div class="rounded-lg border border-base-300/70 bg-base-200/40 p-3">
-                                <div class="flex items-center gap-2 text-xs text-base-content/55">
-                                    <i class="fa-solid fa-user-group"></i>
-                                    <span>Employees</span>
-                                </div>
-                                <p class="mt-2 font-semibold text-base-content">
-                                    {{ number_format($companySize->min_employees) }}
-                                    <span class="font-normal text-base-content/50">–</span>
-                                    {{ $companySize->max_employees === null ? 'Unlimited' : number_format($companySize->max_employees) }}
-                                </p>
-                                <p class="mt-1 text-xs text-base-content/50">Employee range</p>
-                            </div>
-
-                            {{-- Companies --}}
-                            <div class="rounded-lg border border-base-300/70 bg-base-200/40 p-3">
-                                <div class="flex items-center gap-2 text-xs text-base-content/55">
-                                    <i class="fa-solid fa-building"></i>
-                                    <span>Companies</span>
-                                </div>
-                                <p class="mt-2 font-semibold text-base-content"> {{ number_format($companySize->companies_count ?? 0) }} </p>
-                                <p class="mt-1 text-xs text-base-content/50">Assigned companies</p>
-                            </div>
-
-                            {{-- Sort Order --}}
-                            <div class="col-span-2 rounded-lg border border-base-300/70 bg-base-200/40 p-3 sm:col-span-1">
-                                <div class="flex items-center gap-2 text-xs text-base-content/55">
-                                    <i class="fa-solid fa-arrow-down-short-wide"></i>
-                                    <span>Sort Order</span>
-                                </div>
-
-                                <p class="mt-2 font-semibold text-base-content"> {{ $companySize->sort_order }} </p>
-                                <p class="mt-1 text-xs text-base-content/50">Display position</p>
-                            </div>
-                        </div>
-
-                        {{-- ======================= Desktop ACTIONS ======================= --}}
-                        <div class="hidden sm:flex sm:items-center gap-2 xl:justify-end">
-                            <a href="{{ route('admin.company-sizes.show',$companySize) }}" class="btn btn-sm btn-outline gap-2" title="View">
-                                <i class="fa-regular fa-eye"></i> View
-                            </a>
-
-                            <div class="dropdown dropdown-center dropdown-left">
-                                <button tabindex="0" class="btn btn-sm btn-ghost btn-square" aria-label="Page actions">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
-
-                                <ul tabindex="0" class="dropdown-content menu z-30 mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-xl">
-                                    <li>
-                                        <a href="{{ route('admin.company-sizes.show',$companySize) }}">
-                                            <i class="fa-solid fa-eye"></i> View Company Size
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a href="{{ route('admin.company-sizes.edit',$companySize) }}">
-                                            <i class="fa-solid fa-pen-to-square"></i> Edit Company Size
-                                        </a>
-                                    </li>
-
-                                    <li class="menu-title mt-1 px-3 py-1 text-[10px] uppercase tracking-wider">
-                                        <span>Danger zone</span>
-                                    </li>
-
-                                    <li>
-                                        <button
-                                            type="button"
-                                            class="!flex !w-full !max-w-full items-center gap-2 !justify-start rounded-lg px-3 py-2 text-error"
-                                            title="Move company size to trash"
-                                            data-admin-action
-                                            data-action-url="{{ route('admin.company-sizes.destroy', $companySize->slug) }}"
-                                            data-action-method="DELETE"
-                                            data-action-type="danger"
-                                            data-action-title="Move Company Size to Trash"
-                                            data-action-description="Move “{{ $companySize->name }}” to trash. You can restore it later from the Trash page."
-                                            data-action-icon="fa-solid fa-trash-can"
-                                            data-action-confirm-icon="fa-solid fa-trash-can"
-                                            data-action-confirm-text="Move to Trash"
-                                        >
-                                            <i class="fa-solid fa-trash-can shrink-0"></i>
-                                            <span>Move to Trash</span>
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {{-- ======================= Mobile ACTIONS ======================= --}}
-                        <div class="flex justify-between items-center gap-2 sm:hidden">
-                            <a href="{{ route('admin.company-sizes.show',$companySize) }}" class="btn btn-sm btn-outline gap-2" title="View">
-                                <i class="fa-regular fa-eye"></i> View
-                            </a>
-
-                            <a href="{{ route('admin.company-sizes.edit',$companySize) }}" class="btn btn-sm btn-outline gap-2" title="Edit">
-                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                            </a>
-
-                            <button
-                                type="button"
-                                class="text-error gap-2"
-                                title="Move company size to trash"
-                                data-admin-action
-                                data-action-url="{{ route('admin.company-sizes.destroy', $companySize->slug) }}"
-                                data-action-method="DELETE"
-                                data-action-type="danger"
-                                data-action-title="Move Company Size to Trash"
-                                data-action-description="Move “{{ $companySize->name }}” to trash. You can restore it later from the Trash page."
-                                data-action-icon="fa-solid fa-trash-can"
-                                data-action-confirm-icon="fa-solid fa-trash-can"
-                                data-action-confirm-text="Move to Trash"
-                            >
-                                <i class="fa-solid fa-trash-can shrink-0"></i> Trash
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            @empty
-                {{-- ======================= EMPTY STATE ======================= --}}
-                <div class="px-6 py-20 text-center">
-                    <div class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-base-200 text-base-content/30">
-                        <i class="fa-solid fa-users-slash text-2xl"></i>
                     </div>
 
-                    @if (filled($search) || filled($status))
-                        <h3 class="mt-5 text-lg font-black">No matching company sizes</h3>
-                        <p class="mx-auto mt-1 max-w-md text-sm text-base-content/50">No company sizes match your current search and filter combination. Try changing your filters or clearing them.</p>
+                    {{-- Action At --}}
+                    <div class="flex items-center justify-between gap-2 text-xs my-3">
+                        <span class="text-base-content/50">Last Action Time</span>
 
-                        <a href="{{ route('admin.company-sizes.index') }}"
-                            class="btn btn-outline mt-5 gap-2">
-                            <i class="fa-solid fa-rotate-left"></i> Clear Filters
+                        <div class="text-right">
+                            <div class="whitespace-nowrap">
+                                <div class="text-sm font-semibold leading-tight tracking-tighter"> {{ $companySize->updated_at?->format('d M Y, h:i A') }} </div>
+                                <div class="text-xs text-base-content/50"> {{ $companySize->updated_at?->diffForHumans() }} </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex items-center gap-2 border-t border-base-300 pt-3">
+                        <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="btn btn-sm btn-outline flex-1">
+                            <i class="fa-regular fa-eye"></i> View
                         </a>
-                    @else
-                        <x-admin.ui.empty-state
-                            title="No company sizes available"
-                            description="Create your first company size category to classify companies by employee range."
-                            :action-route="route('admin.company-sizes.create')"
-                            action-text="Add Company Size"
-                        />
-                    @endif
+
+                        <a href="{{ route('admin.company-sizes.edit', $companySize) }}" class="btn btn-sm btn-outline flex-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </a>
+
+                        <button
+                            type="button"
+                            class="flex-1 btn btn-sm btn-outline btn-error text-error"
+                            title="Move to Trash"
+                            aria-label="Move {{ $companySize->name }} to trash"
+                            data-admin-action
+                            data-action-url="{{ route('admin.company-sizes.destroy', $companySize) }}"
+                            data-action-method="DELETE"
+                            data-action-type="danger"
+                            data-action-title="Move Company Sizes to Trash"
+                            data-action-description="Move “{{ $companySize->name }}” to trash. You can restore it later from the Trash page."
+                            data-action-icon="fa-solid fa-trash-can"
+                            data-action-confirm-icon="fa-solid fa-trash-can"
+                            data-action-confirm-text="Move to Trash"
+                        >
+                            <i class="fa-solid fa-trash-can"></i>
+                            Trash
+                        </button>
+                    </div>
                 </div>
+            @empty
+                <div class="py-12 text-center text-sm text-base-content/60">No company sizes found.</div>
             @endforelse
         </div>
 

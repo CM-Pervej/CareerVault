@@ -46,14 +46,6 @@ class CompanyTypeRequest extends FormRequest
                 Rule::unique('company_types', 'name')
                     ->ignore($companyTypeId),
             ],
-            'slug' => [
-                'required',
-                'string',
-                'max:255',
-                'alpha_dash',
-                Rule::unique('company_types', 'slug')
-                    ->ignore($companyTypeId),
-            ],
             'description' => [
                 'nullable',
                 'string',

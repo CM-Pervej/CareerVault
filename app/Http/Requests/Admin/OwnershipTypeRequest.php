@@ -37,21 +37,13 @@ class OwnershipTypeRequest extends FormRequest
         $ownershipTypeId = $ownershipType instanceof OwnershipType
             ? $ownershipType->id
             : null;
-
+            
         return [
             'name' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('ownership_types', 'name')
-                    ->ignore($ownershipTypeId),
-            ],
-            'slug' => [
-                'nullable',
-                'string',
-                'max:255',
-                'alpha_dash',
-                Rule::unique('ownership_types', 'slug')
                     ->ignore($ownershipTypeId),
             ],
             'description' => [
@@ -78,6 +70,7 @@ class OwnershipTypeRequest extends FormRequest
         return [
             'name.required' => 'The ownership type name is required.',
             'name.unique' => 'This ownership type name already exists.',
+            'slug.required' => 'The ownership type slug is required.',
             'slug.unique' => 'This ownership type slug already exists.',
             'slug.alpha_dash' => 'The slug may contain letters, numbers, dashes, and underscores only.',
             'sort_order.integer' => 'The sort order must be a valid integer.',

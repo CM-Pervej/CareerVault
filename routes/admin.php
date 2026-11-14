@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\IndustryController;
 use App\Http\Controllers\Admin\OwnershipTypeController;
 use App\Http\Controllers\Admin\StateController;
+use App\Http\Controllers\Admin\TechCategoryController;
 use App\Http\Controllers\Admin\TechnologyController;
 use Illuminate\Support\Facades\Route;
 
@@ -84,36 +85,42 @@ Route::middleware(['web','auth','admin'])
         Route::get('company-sizes-trash', [CompanySizeController::class, 'trash'])->name('company-sizes.trash');
         Route::patch('company-sizes/{companySize}/restore', [CompanySizeController::class, 'restore'])->withTrashed()->name('company-sizes.restore');
         Route::delete('company-sizes/{companySize}/force-delete', [CompanySizeController::class, 'forceDelete'])->withTrashed()->name('company-sizes.force-delete');
-        Route::resource('company-sizes', CompanySizeController::class)->parameters(['company-sizes' => 'companySize'])->withTrashed();
+        Route::resource('company-sizes', CompanySizeController::class)->withTrashed();
 
         // Company Type
         Route::get('company-types-trash', [CompanyTypeController::class, 'trash'])->name('company-types.trash');
-        Route::patch('company-types/{companyType}/restore', [CompanyTypeController::class, 'restore',])->name('company-types.restore');
-        Route::delete('company-types/{companyType}/force-delete', [CompanyTypeController::class, 'forceDelete',])->name('company-types.force-delete');
-        Route::resource('company-types', CompanyTypeController::class)->parameters(['company-types' => 'companyType'])->withTrashed();
+        Route::patch('company-types/{companyType}/restore', [CompanyTypeController::class, 'restore',])->withTrashed()->name('company-types.restore');
+        Route::delete('company-types/{companyType}/force-delete', [CompanyTypeController::class, 'forceDelete',])->withTrashed()->name('company-types.force-delete');
+        Route::resource('company-types', CompanyTypeController::class)->withTrashed();
 
         // Ownership Types
         Route::get('ownership-types/trash', [OwnershipTypeController::class, 'trash'])->name('ownership-types.trash');
-        Route::patch('ownership-types/{id}/restore', [OwnershipTypeController::class, 'restore'])->whereNumber('id')->name('ownership-types.restore');
-        Route::delete('ownership-types/{id}/force-delete', [OwnershipTypeController::class, 'forceDelete'])->whereNumber('id')->name('ownership-types.force-delete');
+        Route::patch('ownership-types/{ownershipType}/restore', [OwnershipTypeController::class, 'restore'])->withTrashed()->name('ownership-types.restore');
+        Route::delete('ownership-types/{ownershipType}/force-delete', [OwnershipTypeController::class, 'forceDelete'])->withTrashed()->name('ownership-types.force-delete');
         Route::resource('ownership-types', OwnershipTypeController::class)->withTrashed();
 
         // Business Models
         Route::get('business-models/trash', [BusinessModelController::class, 'trash'])->name('business-models.trash');
-        Route::patch('business-models/{id}/restore', [BusinessModelController::class, 'restore'])->whereNumber('id')->name('business-models.restore');
-        Route::delete('business-models/{id}/force-delete', [BusinessModelController::class, 'forceDelete'])->whereNumber('id')->name('business-models.force-delete');
+        Route::patch('business-models/{businessModel}/restore', [BusinessModelController::class, 'restore'])->withTrashed()->name('business-models.restore');
+        Route::delete('business-models/{businessModel}/force-delete', [BusinessModelController::class, 'forceDelete'])->withTrashed()->name('business-models.force-delete');
         Route::resource('business-models', BusinessModelController::class)->withTrashed();
+
+        // Technology Categories
+        Route::get('tech-categories/trash', [TechCategoryController::class, 'trash'])->name('tech-categories.trash');
+        Route::patch('tech-categories/{techCategory}/restore', [TechCategoryController::class, 'restore'])->withTrashed()->name('tech-categories.restore');
+        Route::delete('tech-categories/{techCategory}/force-delete', [TechCategoryController::class, 'forceDelete'])->withTrashed()->name('tech-categories.force-delete');
+        Route::resource('tech-categories', TechCategoryController::class)->withTrashed();
 
         // Technologies
         Route::get('technology/trash', [TechnologyController::class, 'trash'])->name('technology.trash');
-        Route::patch('technology/{id}/restore', [TechnologyController::class, 'restore'])->whereNumber('id')->name('technology.restore');
-        Route::delete('technology/{id}/force-delete', [TechnologyController::class, 'forceDelete'])->whereNumber('id')->name('technology.force-delete');
+        Route::patch('technology/{id}/restore', [TechnologyController::class, 'restore'])->withTrashed()->name('technology.restore');
+        Route::delete('technology/{id}/force-delete', [TechnologyController::class, 'forceDelete'])->withTrashed()->name('technology.force-delete');
         Route::resource('technology', TechnologyController::class)->withTrashed();
 
         // Companies
         Route::get('companies/trash', [CompanyController::class, 'trash'])->name('companies.trash');
-        Route::patch('companies/{id}/restore', [CompanyController::class, 'restore'])->whereNumber('id')->name('companies.restore');
-        Route::delete('companies/{id}/force-delete', [CompanyController::class, 'forceDelete'])->whereNumber('id')->name('companies.force-delete');
-        Route::resource('companies', CompanyController::class);
+        Route::patch('companies/{id}/restore', [CompanyController::class, 'restore'])->withTrashed()->name('companies.restore');
+        Route::delete('companies/{id}/force-delete', [CompanyController::class, 'forceDelete'])->withTrashed()->name('companies.force-delete');
+        Route::resource('companies', CompanyController::class)->withTrashed();
 
 });

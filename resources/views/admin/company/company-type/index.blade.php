@@ -147,30 +147,33 @@
                 <table class="table table-zebra">
                     <thead>
                         <tr>
-                            <th class="text-center">S.O.</th> <th>Name</th> <th>Slug</th> <th>Status</th> <th>Action By</th> <th class="text-right">Actions</th>
+                            <th class="text-center">S.O.</th> <th>Name</th> <th>Action By</th> <th>Action Time</th> <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($companyTypes as $item)
                             <tr>
-                                <td class="text-center font-semibold">{{ str_pad($item->sort_order, 2, '0', STR_PAD_LEFT) }}</td>
-                                <td class="min-w-48">
-                                    <a href="{{ route('admin.company-types.show', $item) }}" class="font-semibold hover:text-primary">
-                                        {{ $item->name }}
-                                    </a>
-                                    @if ($item->description)
-                                        <p class="mt-1 max-w-sm truncate text-xs text-base-content/60">
-                                            {{ $item->description }}
-                                        </p>
-                                    @endif
+                                <td class="text-center font-semibold">
+                                    {{ str_pad($item->sort_order, 2, '0', STR_PAD_LEFT) }}
                                 </td>
-                                <td>
-                                    <code class="text-xs">{{ $item->slug }}</code>
-                                </td>
-                                <td>
-                                    <span class="badge {{ $item->is_active ? 'badge-success' : 'badge-ghost' }}">
-                                        {{ $item->is_active ? 'Active' : 'Inactive' }}
-                                    </span>
+                                <td class="flex min-w-0 flex-1 items-start gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('admin.company-types.show', $item) }}" class="font-semibold text-base-content transition hover:text-primary">
+                                                {{ $item->name }}
+                                            </a>
+
+                                            @if ($item->is_active)
+                                                <span class="badge badge-success badge-sm badge-outline">Active</span>
+                                            @else
+                                                <span class="badge badge-ghost badge-sm">Inactive</span>
+                                            @endif
+                                        </div>
+
+                                        @if ($item->description)
+                                            <p class="mt-0.5 line-clamp-2 max-w-xl text-sm leading-relaxed text-base-content/65"> {{ $item->description }} </p>
+                                        @endif
+                                    </div>
                                 </td>
                                 
                                 <td class="whitespace-nowrap">
@@ -200,6 +203,21 @@
                                         @endif
                                     </div>
                                 </td>
+
+                                {{-- Action Date --}}
+                                <td>
+                                    <div class="flex items-start gap-2">
+                                        <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-error/10 text-error">
+                                            <i class="fa-solid fa-clock text-xs"></i>
+                                        </div>
+
+                                        <div class="whitespace-nowrap">
+                                            <div class="text-sm font-semibold leading-tight tracking-tighter"> {{ $item->updated_at?->format('d M Y, h:i A') }} </div>
+                                            <div class="text-xs text-base-content/50"> {{ $item->updated_at?->diffForHumans() }} </div>
+                                        </div>
+                                    </div>
+                                </td>
+
                                 <td>
                                     <div class="hidden sm:flex sm:items-center gap-2 xl:justify-end">
                                         <a href="{{ route('admin.company-types.show',$item) }}" class="btn btn-sm btn-outline gap-2" title="View">

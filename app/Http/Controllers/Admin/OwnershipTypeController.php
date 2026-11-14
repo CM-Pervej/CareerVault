@@ -68,15 +68,7 @@ class OwnershipTypeController extends Controller
     {
         $this->authorize('create', OwnershipType::class);
 
-        $ownershipType = new OwnershipType([
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-
-        return view(
-            'admin.company.ownership-type.create',
-            compact('ownershipType')
-        );
+        return view('admin.company.ownership-type.create');
     }
 
     public function store(OwnershipTypeRequest $request): RedirectResponse
@@ -86,17 +78,13 @@ class OwnershipTypeController extends Controller
         DB::transaction(function () use ($validated) {
             OwnershipType::create([
                 ...$validated,
-                'slug' => $this->makeUniqueSlug(
-                    $validated['slug'] ?: $validated['name']
-                ),
+                'slug' => $this->makeUniqueSlug($validated['name']),
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
         });
 
-        return redirect()
-            ->route('admin.ownership-types.index')
-            ->with('success', 'Ownership type created successfully.');
+        return redirect()->route('admin.ownership-types.index')->with('success', 'Ownership type created successfully.');
     }
 
     public function show(OwnershipType $ownershipType): View
@@ -109,32 +97,24 @@ class OwnershipTypeController extends Controller
             'deleter:id,name',
         ]);
 
-        return view(
-            'admin.company.ownership-type.show',
-            compact('ownershipType')
-        );
+        return view('admin.company.ownership-type.show', compact('ownershipType'));
     }
 
     public function edit(OwnershipType $ownershipType): View
     {
         $this->authorize('update', $ownershipType);
 
-        return view(
-            'admin.company.ownership-type.edit',
-            compact('ownershipType')
-        );
+        return view('admin.company.ownership-type.edit', compact('ownershipType'));
     }
 
-    public function update(
-        OwnershipTypeRequest $request,
-        OwnershipType $ownershipType
-    ): RedirectResponse {
+    public function update(OwnershipTypeRequest $request, OwnershipType $ownershipType): RedirectResponse 
+    {
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $ownershipType) {
             if ($ownershipType->name !== $validated['name']) {
                 $validated['slug'] = $this->makeUniqueSlug(
-                    $validated['slug'] ?: $validated['name'],
+                    $validated['name'],
                     $ownershipType->id
                 );
             }
@@ -145,14 +125,11 @@ class OwnershipTypeController extends Controller
             ]);
         });
 
-        return redirect()
-            ->route('admin.ownership-types.index')
-            ->with('success', 'Ownership type updated successfully.');
+        return redirect()->route('admin.ownership-types.show', $ownershipType)->with('success', 'Ownership type updated successfully.');
     }
 
-    public function destroy(
-        OwnershipType $ownershipType
-    ): RedirectResponse {
+    public function destroy( OwnershipType $ownershipType): RedirectResponse 
+    {
         $this->authorize('delete', $ownershipType);
 
         DB::transaction(function () use ($ownershipType) {
@@ -163,9 +140,7 @@ class OwnershipTypeController extends Controller
             $ownershipType->delete();
         });
 
-        return redirect()
-            ->route('admin.ownership-types.index')
-            ->with('success', 'Ownership type moved to trash successfully.');
+        return redirect()->route('admin.ownership-types.index')->with('success', 'Ownership type moved to trash successfully.');
     }
 
     public function trash(Request $request): View
@@ -245,9 +220,7 @@ class OwnershipTypeController extends Controller
         $this->authorize('restore', $ownershipType);
 
         if (!$ownershipType->trashed()) {
-            return redirect()
-                ->route('admin.ownership-types.trash')
-                ->with('error', 'This ownership type is not in the trash.');
+            return redirect()->route('admin.ownership-types.trash')->with('error', 'This ownership type is not in the trash.');
         }
 
         DB::transaction(function () use ($ownershipType) {
@@ -259,9 +232,7 @@ class OwnershipTypeController extends Controller
             ])->save();
         });
 
-        return redirect()
-            ->route('admin.ownership-types.trash')
-            ->with('success', 'Ownership type restored successfully.');
+        return redirect()->route('admin.ownership-types.trash')->with('success', 'Ownership type restored successfully.');
     }
 
     /**
@@ -272,40 +243,25 @@ class OwnershipTypeController extends Controller
         $this->authorize('forceDelete', $ownershipType);
 
         if (!$ownershipType->trashed()) {
-            return redirect()
-                ->route('admin.ownership-types.trash')
-                ->with('error', 'Only trashed ownership types can be permanently deleted.');
+            return redirect()->route('admin.ownership-types.trash')->with('error', 'Only trashed ownership types can be permanently deleted.');
         }
 
         DB::transaction(function () use ($ownershipType) {
             $ownershipType->forceDelete();
         });
 
-        return redirect()
-            ->route('admin.ownership-types.trash')
-            ->with('success', 'Ownership type permanently deleted.');
+        return redirect()->route('admin.ownership-types.trash')->with('success', 'Ownership type permanently deleted.');
     }
 
-    private function makeUniqueSlug(
-        string $value,
-        ?int $ignoreId = null
-    ): string {
+    private function makeUniqueSlug(string $value, ?int $ignoreId = null): string {
         $base = Str::slug($value);
-
-        if ($base === '') {
-            $base = 'ownership-type';
-        }
-
         $slug = $base;
         $counter = 1;
 
         while (
             OwnershipType::withTrashed()
                 ->where('slug', $slug)
-                ->when(
-                    $ignoreId !== null,
-                    fn ($query) => $query->where('id', '!=', $ignoreId)
-                )
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
             $counter++;

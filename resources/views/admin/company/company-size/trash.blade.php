@@ -1,4 +1,3 @@
-
 @extends('layouts.admin.app')
 
 @section('title', 'Company Sizes Trash | CareerVault')
@@ -370,7 +369,7 @@
 
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="break-words font-semibold text-base-content"> {{ $companySize->name }} </h3>
+                                <a href="{{ route('admin.company-sizes.show', $companySize) }}" class="font-semibold text-base-content transition hover:text-primary"> {{ $companySize->name }} </a>
                                 <span class="badge badge-error badge-outline badge-sm">Deleted</span>
                             </div>
                             <p class="mt-1 break-all text-xs text-base-content/50"> {{ $companySize->slug }} </p>

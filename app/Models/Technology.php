@@ -11,11 +11,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Technology extends Model
 {
     use HasFactory, SoftDeletes;
-
     protected $fillable = [
         'name',
         'slug',
-        'category',
+        'category_id',
         'description',
         'icon',
         'color',
@@ -37,27 +36,29 @@ class Technology extends Model
 
     public function companies(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Company::class,
-            'company_technology'
-        )->withTimestamps();
+        return $this->belongsToMany(Company::class, 'company_technology')->withTimestamps();
     }
 
-    public function creator(): BelongsTo
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(TechCategory::class, 'category_id');
+    }
+
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updater(): BelongsTo
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function deleter(): BelongsTo
+    public function deletedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
-
+    
     public function getRouteKeyName(): string
     {
         return 'slug';

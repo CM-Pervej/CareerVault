@@ -276,7 +276,7 @@
                                             class="btn btn-sm btn-success btn-outline gap-2 flex-1 sm:flex-none"
                                             title="Restore ownership type"
                                             data-admin-action
-                                            data-action-url="{{ route('admin.ownership-types.restore', $item->id) }}"
+                                            data-action-url="{{ route('admin.ownership-types.restore', $item->slug) }}"
                                             data-action-method="PATCH"
                                             data-action-type="success"
                                             data-action-title="Restore Ownership Type"
@@ -295,7 +295,7 @@
                                             class="btn btn-error btn-sm btn-outline gap-2 flex-1 sm:flex-none"
                                             title="Delete permanently"
                                             data-admin-action
-                                            data-action-url="{{ route('admin.ownership-types.force-delete', $item->id) }}"
+                                            data-action-url="{{ route('admin.ownership-types.force-delete', $item->slug) }}"
                                             data-action-method="DELETE"
                                             data-action-type="danger"
                                             data-action-title="Delete Ownership Type Permanently"
@@ -346,7 +346,9 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="break-words font-semibold text-base-content">{{ $item->name }}</h3>
+                                <a href="{{ route('admin.ownership-types.show', $item) }}" class="font-semibold text-base-content transition hover:text-primary">
+                                    {{ $item->name }}
+                                </a>
                                 <span class="badge badge-error badge-outline badge-sm">Deleted</span>
                             </div>
                             <p class="mt-1 break-all text-xs text-base-content/50">{{ $item->slug }}</p>
@@ -392,7 +394,7 @@
                                 type="button"
                                 class="btn btn-sm btn-success btn-outline min-w-0 flex-1 gap-2"
                                 data-admin-action
-                                data-action-url="{{ route('admin.ownership-types.restore', $item->id) }}"
+                                data-action-url="{{ route('admin.ownership-types.restore', $item->slug) }}"
                                 data-action-method="PATCH"
                                 data-action-type="success"
                                 data-action-title="Restore Ownership Type"
@@ -410,7 +412,7 @@
                                 type="button"
                                 class="btn btn-sm btn-error btn-outline min-w-0 flex-1 gap-2"
                                 data-admin-action
-                                data-action-url="{{ route('admin.ownership-types.force-delete', $item->id) }}"
+                                data-action-url="{{ route('admin.ownership-types.force-delete', $item->slug) }}"
                                 data-action-method="DELETE"
                                 data-action-type="danger"
                                 data-action-title="Delete Ownership Type Permanently"

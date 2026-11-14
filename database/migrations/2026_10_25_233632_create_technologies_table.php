@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('technologies', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('category_id')->nullable()->constrained('tech_categories')->nullOnDelete();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('category')->nullable()->index();
             $table->text('description')->nullable();
             $table->string('icon')->nullable();
             $table->string('color', 30)->nullable();

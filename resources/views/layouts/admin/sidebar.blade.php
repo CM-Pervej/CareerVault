@@ -18,7 +18,8 @@
         'admin.cities.*',
         'admin.industries.*',
         'admin.states.*',
-        'admin.technology.*'
+        'admin.technology.*',
+        'admin.tech-categories.*'
     );
 
     $companiesActive = request()->routeIs(
@@ -296,7 +297,17 @@
                             <span class="flex w-4 justify-center">
                                 <i class="fa-solid fa-city text-[11px]"></i>
                             </span>
-                            <span>technology</span>
+                            <span>Technology</span>
+                        </a>
+                    @endif
+
+                    @if(Route::has('admin.tech-categories.index'))
+                        <a href="{{ route('admin.tech-categories.index') }}"
+                        class="cv-subnav-link {{ request()->routeIs('admin.tech-categories.*') ? 'cv-subnav-link--active' : '' }}">
+                            <span class="flex w-4 justify-center">
+                                <i class="fa-solid fa-city text-[11px]"></i>
+                            </span>
+                            <span>Technology Categories</span>
                         </a>
                     @endif
                 </div>

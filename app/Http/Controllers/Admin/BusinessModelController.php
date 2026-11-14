@@ -10,51 +10,56 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class BusinessModelController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', BusinessModel::class);
 
-        $query = BusinessModel::query();
+        $search = trim($request->input('search', ''));
+        $status = $request->input('status');
 
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where(
-                'is_active',
-                $request->input('status') === 'active'
-            );
-        }
-
-        $businessModels = $query
+        $businessModels = BusinessModel::query()
+            ->with([
+                'creator:id,name,role',
+                'updater:id,name,role',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($status !== null && $status !== '', function ($query) use ($status) {
+                $query->where('is_active', $status === 'active');
+            })
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.company.business-model.index', [
-            'businessModels' => $businessModels,
-            'search' => $request->input('search', ''),
-            'status' => $request->input('status', ''),
-            'totalBusinessModels' => BusinessModel::count(),
-            'activeBusinessModels' => BusinessModel::where('is_active', true)->count(),
-            'inactiveBusinessModels' => BusinessModel::where('is_active', false)->count(),
-            'trashedBusinessModelsCount' => BusinessModel::onlyTrashed()->count(),
-        ]);
+        // Summary Statistics
+        $totalBusinessModels = BusinessModel::count();
+        $activeBusinessModels = BusinessModel::where('is_active', true)->count();
+        $inactiveBusinessModels = BusinessModel::where('is_active', false)->count();
+        $trashedBusinessModelsCount = BusinessModel::onlyTrashed()->count();
+
+        return view('admin.company.business-model.index', compact(
+            'businessModels',
+            'search',
+            'status',
+            'totalBusinessModels',
+            'activeBusinessModels',
+            'inactiveBusinessModels',
+            'trashedBusinessModelsCount',
+        ));
     }
 
     public function create(): View
@@ -66,19 +71,18 @@ class BusinessModelController extends Controller
 
     public function store(BusinessModelRequest $request): RedirectResponse
     {
-        $this->authorize('create', BusinessModel::class);
-
         $data = $request->validated();
-        $data['slug'] = $this->generateUniqueSlug($data['name']);
-        $data['is_active'] = $request->boolean('is_active');
-        $data['created_by'] = Auth::id();
-        $data['updated_by'] = Auth::id();
 
-        BusinessModel::create($data);
+        DB::transaction(function () use ($request, $data) {
+            $data['slug'] = $this->generateUniqueSlug($data['name']);
+            $data['is_active'] = $request->boolean('is_active');
+            $data['created_by'] = Auth::id();
+            $data['updated_by'] = Auth::id();
 
-        return redirect()
-            ->route('admin.business-models.index')
-            ->with('success', 'Business model created successfully.');
+            BusinessModel::create($data);
+        });
+
+        return redirect()->route('admin.business-models.index')->with('success', 'Business model created successfully.');
     }
 
     public function show(BusinessModel $businessModel): View
@@ -104,66 +108,97 @@ class BusinessModelController extends Controller
         BusinessModelRequest $request,
         BusinessModel $businessModel
     ): RedirectResponse {
-        $this->authorize('update', $businessModel);
-
         $data = $request->validated();
-        $data['is_active'] = $request->boolean('is_active');
-        $data['updated_by'] = Auth::id();
 
-        if ($businessModel->name !== $data['name']) {
-            $data['slug'] = $this->generateUniqueSlug(
-                $data['name'],
-                $businessModel->id
-            );
-        }
+        DB::transaction(function () use ($request, $businessModel, $data) {
+            if ($businessModel->name !== $data['name']) {
+                $data['slug'] = $this->generateUniqueSlug(
+                    $data['name'],
+                    $businessModel->id
+                );
+            }
 
-        $businessModel->update($data);
+            $data['is_active'] = $request->boolean('is_active');
+            $data['updated_by'] = Auth::id();
 
-        return redirect()
-            ->route('admin.business-models.index')
-            ->with('success', 'Business model updated successfully.');
+            $businessModel->update($data);
+        });
+
+        return redirect()->route('admin.business-models.show', $businessModel)->with('success', 'Business model updated successfully.');
     }
 
     public function destroy(BusinessModel $businessModel): RedirectResponse
     {
         $this->authorize('delete', $businessModel);
 
-        $businessModel->deleted_by = Auth::id();
-        $businessModel->save();
-        $businessModel->delete();
+        DB::transaction(function () use ($businessModel) {
+            $businessModel->update([
+                'deleted_by' => Auth::id(),
+            ]);
 
-        return redirect()
-            ->route('admin.business-models.index')
-            ->with('success', 'Business model moved to trash.');
+            $businessModel->delete();
+        });
+
+        return redirect()->route('admin.business-models.index')->with('success', 'Business model moved to trash successfully.');
     }
 
     public function trash(Request $request): View
     {
-        $this->authorize('viewTrashed', BusinessModel::class);
+        $this->authorize('viewAny', BusinessModel::class);
 
-        $query = BusinessModel::onlyTrashed()
-            ->with('deleter:id,name');
+        $search = trim($request->input('search', ''));
+        $deletedBy = $request->input('deleted_by', '');
+        $deletedPeriod = trim($request->input('deleted_period', ''));
 
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $businessModels = $query
+        $businessModels = BusinessModel::onlyTrashed()
+            ->with([
+                'deleter:id,name,role',
+                'creator:id,name',
+                'updater:id,name',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($deletedBy, function ($query) use ($deletedBy) {
+                $query->where('deleted_by', $deletedBy);
+            })
+            ->when($deletedPeriod, function ($query) use ($deletedPeriod) {
+                match ($deletedPeriod) {
+                    'today' => $query->whereDate('deleted_at', today()),
+                    'yesterday' => $query->whereDate('deleted_at', today()->subDay()),
+                    'last_7_days' => $query->where('deleted_at', '>=', now()->subDays(7)),
+                    'last_30_days' => $query->where('deleted_at', '>=', now()->subDays(30)),
+                    'last_3_months' => $query->where('deleted_at', '>=', now()->subMonths(3)),
+                    'this_year' => $query->whereYear('deleted_at', now()->year),
+                    default => null,
+                };
+            })
             ->orderByDesc('deleted_at')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.company.business-model.trash', [
-            'businessModels' => $businessModels,
-            'search' => $request->input('search', ''),
-            'trashedBusinessModelsCount' => BusinessModel::onlyTrashed()->count(),
-        ]);
+        $users = User::whereIn('id', BusinessModel::onlyTrashed()->whereNotNull('deleted_by')->distinct()->pluck('deleted_by'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+
+        $trashedBusinessModelsCount = BusinessModel::onlyTrashed()->count();
+        $deletedTodayBusinessModels = BusinessModel::onlyTrashed()->whereDate('deleted_at', today())->count();
+        $deletedThisWeekBusinessModels = BusinessModel::onlyTrashed()->where('deleted_at', '>=', now()->subDays(7))->count();
+
+        return view('admin.company.business-model.trash', compact(
+            'businessModels',
+            'search',
+            'deletedBy',
+            'deletedPeriod',
+            'users',
+            'trashedBusinessModelsCount',
+            'deletedTodayBusinessModels',
+            'deletedThisWeekBusinessModels',
+        ));
     }
 
     public function restore(string $businessModel): RedirectResponse
@@ -174,16 +209,21 @@ class BusinessModelController extends Controller
 
         $this->authorize('restore', $record);
 
-        $record->restore();
-        $record->deleted_by = null;
-        $record->updated_by = Auth::id();
-        $record->save();
+        DB::transaction(function () use ($record) {
+            $record->restore();
 
-        return redirect()
-            ->route('admin.business-models.trash')
-            ->with('success', 'Business model restored successfully.');
+            $record->forceFill([
+                'deleted_by' => null,
+                'updated_by' => Auth::id(),
+            ])->save();
+        });
+
+        return redirect()->route('admin.business-models.trash')->with('success', 'Business model restored successfully.');
     }
 
+    /**
+     * Permanently delete a trashed business model.
+     */
     public function forceDelete(string $businessModel): RedirectResponse
     {
         $record = BusinessModel::onlyTrashed()
@@ -192,19 +232,19 @@ class BusinessModelController extends Controller
 
         $this->authorize('forceDelete', $record);
 
-        $record->forceDelete();
+        DB::transaction(function () use ($record) {
+            $record->forceDelete();
+        });
 
-        return redirect()
-            ->route('admin.business-models.trash')
-            ->with('success', 'Business model permanently deleted.');
+        return redirect()->route('admin.business-models.trash')->with('success', 'Business model permanently deleted.');
     }
 
-    private function generateUniqueSlug(
-        string $name,
-        ?int $ignoreId = null
-    ): string {
+    private function generateUniqueSlug(string $name, ?int $ignoreId = null): string
+    {
         $baseSlug = Str::slug($name);
-        $slug = $baseSlug ?: 'business-model';
+        $baseSlug = $baseSlug ?: 'business-model';
+
+        $slug = $baseSlug;
         $counter = 1;
 
         while (
@@ -213,7 +253,8 @@ class BusinessModelController extends Controller
                 ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = ($baseSlug ?: 'business-model') . '-' . $counter++;
+            $counter++;
+            $slug = $baseSlug . '-' . $counter;
         }
 
         return $slug;

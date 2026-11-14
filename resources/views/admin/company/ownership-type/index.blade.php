@@ -1,4 +1,3 @@
-
 @extends('layouts.admin.app')
 
 @section('title', 'Ownership Types | CareerVault')
@@ -20,11 +19,7 @@
         />
 
         {{-- ========================= STATISTICS ========================= --}}
-        <details
-            class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm"
-            data-section="ownershipTypeStates"
-            open
-        >
+        <details class="cv-section overflow-hidden sm:rounded-lg border border-base-300 bg-base-100 shadow-sm" data-section="ownershipTypeStates" open>
             <x-admin.ui.disclosure-summary
                 title="Statistics"
                 icon="fa-solid fa-chart-simple"
@@ -134,7 +129,7 @@
             ]"
         />
 
-        <section class="rounded-lg sm:border sm:border-gray-200 sm:shadow-sm mt-5">
+        <section class="rounded-lg sm:border sm:border-gray-200 sm:shadow-sm mt-5 overflow-hidden border border-base-300 bg-base-100 shadow-sm">
             {{-- Directory Header --}}
             <x-admin.ui.platform.heading
                 title="Ownership Type Directory"
@@ -147,15 +142,10 @@
 
             {{-- ======================= DESKTOP LIST ======================= --}}
             <div class="hidden overflow-x-auto sm:block">
-                <table class="table table-zebra">
+                <table class="table table-zebra w-full">
                     <thead>
                         <tr>
-                            <th class="text-center">S.O.</th>
-                            <th>Name</th>
-                            <th>Slug</th>
-                            <th>Status</th>
-                            <th>Action By</th>
-                            <th class="text-right">Actions</th>
+                            <th class="text-center">S.O.</th> <th>Name</th> <th>Action By</th> <th>Action Time</th> <th class="text-right">Actions</th>
                         </tr>
                     </thead>
 
@@ -166,93 +156,79 @@
                                     {{ str_pad($ownershipType->sort_order, 2, '0', STR_PAD_LEFT) }}
                                 </td>
 
-                                <td class="min-w-48">
-                                    <a
-                                        href="{{ route('admin.ownership-types.show', $ownershipType) }}"
-                                        class="font-semibold hover:text-primary"
-                                    >
-                                        {{ $ownershipType->name }}
-                                    </a>
+                                <td class="flex min-w-0 flex-1 items-start gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('admin.ownership-types.show', $ownershipType) }}" class="font-semibold text-base-content transition hover:text-primary"> {{ $ownershipType->name }} </a>
 
-                                    @if ($ownershipType->description)
-                                        <p class="mt-1 max-w-sm truncate text-xs text-base-content/60">
-                                            {{ $ownershipType->description }}
-                                        </p>
-                                    @endif
-                                </td>
+                                            @if ($ownershipType->is_active)
+                                                <span class="badge badge-success badge-sm badge-outline">Active</span>
+                                            @else
+                                                <span class="badge badge-ghost badge-sm">Inactive</span>
+                                            @endif
+                                        </div>
 
-                                <td>
-                                    <code class="text-xs">{{ $ownershipType->slug }}</code>
-                                </td>
-
-                                <td>
-                                    <span class="badge {{ $ownershipType->is_active ? 'badge-success' : 'badge-ghost' }}">
-                                        {{ $ownershipType->is_active ? 'Active' : 'Inactive' }}
-                                    </span>
+                                        @if ($ownershipType->description)
+                                            <p class="mt-0.5 line-clamp-2 max-w-xl text-sm leading-relaxed text-base-content/65"> {{ $ownershipType->description }} </p>
+                                        @endif
+                                    </div>
                                 </td>
 
                                 <td class="whitespace-nowrap">
                                     <div>
                                         @if ($ownershipType->updater?->name)
-                                            <span class="text-sm font-semibold text-green-500 font-serif">
-                                                {{ $ownershipType->updater->name }}
-                                            </span>
+                                            <span class="text-sm font-semibold text-green-500 font-serif"> {{ $ownershipType->updater->name }} </span>
                                         @elseif ($ownershipType->creator?->name)
-                                            <span class="text-sm font-semibold text-blue-500 font-serif">
-                                                {{ $ownershipType->creator->name }}
-                                            </span>
+                                            <span class="text-sm font-semibold text-blue-500 font-serif"> {{ $ownershipType->creator->name }} </span>
                                         @else
-                                            <span class="text-xs text-center text-red-600">
-                                                Not Defined
-                                            </span>
+                                            <span class="text-xs text-center text-red-600">Not Defined</span>
                                         @endif
                                     </div>
 
                                     <div>
                                         @if ($ownershipType->updater?->role)
-                                            <span class="text-sm">
-                                                {{ $ownershipType->updater->role }}
-                                            </span>
+                                            <span class="text-sm"> {{ $ownershipType->updater->role }} </span>
                                         @elseif ($ownershipType->creator?->role)
-                                            <span class="text-sm">
-                                                {{ $ownershipType->creator->role }}
-                                            </span>
+                                            <span class="text-sm"> {{ $ownershipType->creator->role }} </span>
                                         @endif
+                                    </div>
+                                </td>
+
+                                {{-- Action Date --}}
+                                <td>
+                                    <div class="flex items-start gap-2">
+                                        <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-error/10 text-error">
+                                            <i class="fa-solid fa-clock text-xs"></i>
+                                        </div>
+
+                                        <div class="whitespace-nowrap">
+                                            <div class="text-sm font-semibold leading-tight tracking-tighter"> {{ $ownershipType->updated_at?->format('d M Y, h:i A') }} </div>
+                                            <div class="text-xs text-base-content/50"> {{ $ownershipType->updated_at?->diffForHumans() }} </div>
+                                        </div>
                                     </div>
                                 </td>
 
                                 <td>
                                     <div class="hidden sm:flex sm:items-center gap-2 xl:justify-end">
-                                        <a
-                                            href="{{ route('admin.ownership-types.show', $ownershipType) }}"
-                                            class="btn btn-sm btn-outline gap-2"
-                                            title="View"
-                                        >
-                                            <i class="fa-regular fa-eye"></i>
-                                            View
+                                        <a href="{{ route('admin.ownership-types.show', $ownershipType) }}" class="btn btn-sm btn-outline gap-2" title="View">
+                                            <i class="fa-regular fa-eye"></i> View
                                         </a>
 
                                         <div class="dropdown dropdown-center dropdown-left">
-                                            <button
-                                                tabindex="0"
-                                                class="btn btn-sm btn-ghost btn-square"
-                                                aria-label="Page actions"
-                                            >
+                                            <button tabindex="0" class="btn btn-sm btn-ghost btn-square" aria-label="Page actions">
                                                 <i class="fa-solid fa-ellipsis-vertical"></i>
                                             </button>
 
                                             <ul tabindex="0" class="dropdown-content menu z-30 mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-xl">
                                                 <li>
                                                     <a href="{{ route('admin.ownership-types.show', $ownershipType) }}">
-                                                        <i class="fa-solid fa-eye"></i>
-                                                        View Ownership Type
+                                                        <i class="fa-solid fa-eye"></i> View Ownership Type
                                                     </a>
                                                 </li>
 
                                                 <li>
                                                     <a href="{{ route('admin.ownership-types.edit', $ownershipType) }}">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                        Edit Ownership Type
+                                                        <i class="fa-solid fa-pen-to-square"></i> Edit Ownership Type
                                                     </a>
                                                 </li>
 
@@ -286,9 +262,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-12 text-center text-base-content/60">
-                                    No ownership types found.
-                                </td>
+                                <td colspan="6" class="py-12 text-center text-base-content/60">No ownership types found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -307,16 +281,8 @@
                                 </span>
 
                                 <div class="min-w-0">
-                                    <a
-                                        href="{{ route('admin.ownership-types.show', $ownershipType) }}"
-                                        class="font-semibold hover:text-primary"
-                                    >
-                                        {{ $ownershipType->name }}
-                                    </a>
-
-                                    <p class="mt-0.5 break-all text-xs text-base-content/50">
-                                        {{ $ownershipType->slug }}
-                                    </p>
+                                    <a href="{{ route('admin.ownership-types.show', $ownershipType) }}" class="font-semibold hover:text-primary"> {{ $ownershipType->name }} </a>
+                                    <p class="mt-0.5 break-all text-xs text-base-content/50"> {{ $ownershipType->slug }} </p>
                                 </div>
                             </div>
 
@@ -327,9 +293,7 @@
 
                         {{-- Description --}}
                         @if ($ownershipType->description)
-                            <p class="mt-3 text-sm text-base-content/70">
-                                {{ $ownershipType->description }}
-                            </p>
+                            <p class="mt-3 text-sm text-base-content/70"> {{ $ownershipType->description }} </p>
                         @endif
 
                         <div class="my-3 border-t border-base-300"></div>
@@ -339,42 +303,46 @@
                             <span class="text-base-content/50">Last Action By</span>
 
                             <div class="text-right">
-                                @if ($ownershipType->updater?->name)
-                                    <p class="font-semibold text-green-500">
-                                        {{ $ownershipType->updater->name }}
-                                    </p>
-                                    <p class="text-base-content/60">
-                                        {{ $ownershipType->updater->role ?? 'Not Defined' }}
-                                    </p>
-                                @elseif ($ownershipType->creator?->name)
-                                    <p class="font-semibold text-blue-500">
-                                        {{ $ownershipType->creator->name }}
-                                    </p>
-                                    <p class="text-base-content/60">
-                                        {{ $ownershipType->creator->role ?? 'Not Defined' }}
-                                    </p>
-                                @else
-                                    <p class="text-error">Not Defined</p>
-                                @endif
+                                <div>
+                                    @if ($ownershipType->updater?->name)
+                                        <span class="text-sm font-semibold text-green-500 font-serif"> {{ $ownershipType->updater->name }} </span>
+                                    @elseif ($ownershipType->creator?->name)
+                                        <span class="text-sm font-semibold text-blue-500 font-serif"> {{ $ownershipType->creator->name }} </span>
+                                    @else
+                                        <span class="text-xs text-center text-red-600">Not Defined</span>
+                                    @endif
+                                </div>
+
+                                <div>
+                                    @if ($ownershipType->updater?->role)
+                                        <span class="text-sm"> {{ $ownershipType->updater->role }} </span>
+                                    @elseif ($ownershipType->creator?->role)
+                                        <span class="text-sm"> {{ $ownershipType->creator->role }} </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Action At --}}
+                        <div class="flex items-center justify-between gap-2 text-xs my-3">
+                            <span class="text-base-content/50">Last Action Time</span>
+
+                            <div class="text-right">
+                                <div class="whitespace-nowrap">
+                                    <div class="text-sm font-semibold leading-tight tracking-tighter"> {{ $ownershipType->updated_at?->format('d M Y, h:i A') }} </div>
+                                    <div class="text-xs text-base-content/50"> {{ $ownershipType->updated_at?->diffForHumans() }} </div>
+                                </div>
                             </div>
                         </div>
 
                         {{-- Actions --}}
                         <div class="mt-3 flex items-center gap-2 border-t border-base-300 pt-3">
-                            <a
-                                href="{{ route('admin.ownership-types.show', $ownershipType) }}"
-                                class="btn btn-sm btn-outline flex-1"
-                            >
-                                <i class="fa-regular fa-eye"></i>
-                                View
+                            <a href="{{ route('admin.ownership-types.show', $ownershipType) }}" class="btn btn-sm btn-outline flex-1">
+                                <i class="fa-regular fa-eye"></i> View
                             </a>
 
-                            <a
-                                href="{{ route('admin.ownership-types.edit', $ownershipType) }}"
-                                class="btn btn-sm btn-outline flex-1"
-                            >
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                Edit
+                            <a href="{{ route('admin.ownership-types.edit', $ownershipType) }}" class="btn btn-sm btn-outline flex-1">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
                             </a>
 
                             <button
@@ -392,15 +360,12 @@
                                 data-action-confirm-icon="fa-solid fa-trash-can"
                                 data-action-confirm-text="Move to Trash"
                             >
-                                <i class="fa-solid fa-trash-can"></i>
-                                Trash
+                                <i class="fa-solid fa-trash-can"></i> Trash
                             </button>
                         </div>
                     </div>
                 @empty
-                    <div class="py-12 text-center text-sm text-base-content/60">
-                        No ownership types found.
-                    </div>
+                    <div class="py-12 text-center text-sm text-base-content/60">No ownership types found.</div>
                 @endforelse
             </div>
 
